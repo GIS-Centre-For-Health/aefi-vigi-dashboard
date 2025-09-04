@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AEFI Data Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p id="loading-message">Processing your data...</p>
+    </div>
+    
+    <header>
+        <h1>Enhanced AEFI Data Visualization Tool</h1>
+        <p class="subtitle">Analyze and visualize Adverse Events Following Immunization data</p>
+    </header>
+    
+    <div class="controls">
+        <div class="upload-container">
+            <label for="upload" class="file-label">
+                <i class="fas fa-file-excel"></i>
+                <span id="file-label-text">Upload AEFI Excel File</span>
+            </label>
+            <input type="file" id="upload" class="file-input" accept=".xlsx, .xls">
+            <div id="file-info"></div>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="filter-section" class="filter-section" style="display: none;">
+            <div class="filter-group">
+                <label for="region-filter">Region Filter</label>
+                <select id="region-filter">
+                    <option value="all">All Regions</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="date-range">Date Range</label>
+                <select id="date-range">
+                    <option value="all">All Time</option>
+                    <option value="last30">Last 30 Days</option>
+                    <option value="last90">Last 90 Days</option>
+                    <option value="last180">Last 180 Days</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="vaccine-filter">Vaccine Filter</label>
+                <select id="vaccine-filter">
+                    <option value="all">All Vaccines</option>
+                </select>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="apply-filters" class="btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <button id="reset-filters" class="btn-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button id="export-data" class="btn-primary">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <div id="export-options" class="export-options">
+                    <div class="export-option" data-type="pdf"><i class="fas fa-file-pdf"></i> PDF Report</div>
+                    <div class="export-option" data-type="csv"><i class="fas fa-file-csv"></i> CSV Data</div>
+                    <div class="export-option" data-type="png"><i class="fas fa-image"></i> PNG Images</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="summary-section" class="summary-section" style="display: none;">
+        <h2 class="summary-title">Data Overview</h2>
+        <div id="summary-stats" class="summary-stats"></div>
+    </div>
+    
+    <div id="visualization-container" style="display: none;">
+        <div class="tabs">
+            <div class="tab active" data-section="demographics">Demographics</div>
+            <div class="tab" data-section="geographic">Geographic</div>
+            <div class="tab" data-section="clinical">Clinical</div>
+            <div class="tab" data-section="temporal">Temporal</div>
+            <div class="tab" data-section="vaccine">Vaccine</div>
+        </div>
+        
+        <div id="demographics-section" class="chart-section active">
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Sex Distribution</h3></div><canvas id="sexChart"></canvas></div>
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Age Distribution</h3></div><canvas id="ageGroupChart"></canvas></div>
+        </div>
+        
+        <div id="geographic-section" class="chart-section">
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Provinces Distribution</h3></div><canvas id="provincesChart"></canvas></div>
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Regional Distribution</h3></div><canvas id="regionChart"></canvas></div>
+        </div>
+        
+        <div id="clinical-section" class="chart-section">
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Adverse Events</h3></div><canvas id="adverseEventsChart"></canvas></div>
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Serious Events</h3></div><canvas id="seriousnessChart"></canvas></div>
+        </div>
+        
+        <div id="temporal-section" class="chart-section">
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Vaccination to Report Gap</h3></div><canvas id="timeToOnsetChart"></canvas></div>
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Reports Over Time</h3></div><canvas id="reportsTimeChart"></canvas></div>
+        </div>
+        
+        <div id="vaccine-section" class="chart-section">
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Cases by Vaccine</h3></div><canvas id="vaccineChart"></canvas></div>
+            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">AEs by Vaccine</h3></div><canvas id="vaccineAdverseChart"></canvas></div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Enhanced AEFI Data Visualization Tool &copy; 2025</p>
+    </footer>
+
+    <!-- CDN Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Local Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/compatibility.js"></script>
+    <script src="js/main.js"></script>
+    <!-- Chart Modules -->
+    <script src="js/charts/sex_chart.js"></script>
+    <script src="js/charts/basic_charts.js"></script>
+</body>
+</html>

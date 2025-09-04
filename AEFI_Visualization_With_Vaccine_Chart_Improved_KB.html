@@ -1,0 +1,2818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AEFI Data Visualization</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --card-bg: rgba(255, 255, 255, 0.9);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #b3cde0, #6497b1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--primary);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            gap: 10px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px dashed var(--secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .file-label:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .file-label i {
+            margin-right: 10px;
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .filter-section {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            justify-content: space-between;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+            display: block;
+        }
+        
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .tab.active {
+            background: var(--card-bg);
+            color: var(--secondary);
+            border-bottom: 3px solid var(--secondary);
+        }
+        
+        .chart-section {
+            display: none;
+        }
+        
+        .chart-section.active {
+            display: block;
+        }
+        
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            min-height: 400px;
+            max-height: 500px; /* Add this to limit height */
+            max-width: 100%; /* Ensure it doesn't overflow the container */
+            overflow: hidden; /* Hide overflow content */
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .chart-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-actions button {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--secondary);
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        
+        .chart-actions button:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .chart-canvas {
+            width: 100% !important; /* Force width to be 100% of container */
+            height: 400px !important; /* Fix height */
+        }
+        
+        .summary-section {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 10px;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                padding: 15px;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid var(--secondary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .export-options {
+            position: absolute;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 10px;
+            display: none;
+            z-index: 100;
+        }
+
+        .export-options.active {
+            display: block;
+        }
+
+        .export-option {
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .export-option:hover {
+            background: #f1f1f1;
+        }
+
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .tooltip-icon {
+            color: var(--secondary);
+            cursor: pointer;
+        }
+
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>        
+    <!-- Required libraries -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p id="loading-message">Processing your data...</p>
+    </div>
+    
+    <header>
+        <h1>Enhanced AEFI Data Visualization Tool</h1>
+        <p class="subtitle">Analyze and visualize Adverse Events Following Immunization data</p>
+    </header>
+    
+    <div class="controls">
+        <div class="upload-container">
+            <label for="upload" class="file-label">
+                <i class="fas fa-file-excel"></i>
+                <span>Upload AEFI Excel File</span>
+            </label>
+            <input type="file" id="upload" class="file-input" accept=".xlsx">
+            <div id="file-info"></div>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div id="filter-section" class="filter-section" style="display: none;">
+            <div class="filter-group">
+                <label for="region-filter">Region Filter</label>
+                <select id="region-filter">
+                    <option value="all">All Regions</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="date-range">Date Range</label>
+                <select id="date-range">
+                    <option value="all">All Time</option>
+                    <option value="last30">Last 30 Days</option>
+                    <option value="last90">Last 90 Days</option>
+                    <option value="last180">Last 180 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="vaccine-filter">Vaccine Filter</label>
+                <select id="vaccine-filter">
+                    <option value="all">All Vaccines</option>
+                </select>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="apply-filters" class="btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <button id="reset-filters" class="btn-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button id="export-data" class="btn-primary">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <div id="export-options" class="export-options">
+                    <div class="export-option" data-type="pdf">
+                        <i class="fas fa-file-pdf"></i> PDF Report
+                    </div>
+                    <div class="export-option" data-type="csv">
+                        <i class="fas fa-file-csv"></i> CSV Data
+                    </div>
+                    <div class="export-option" data-type="png">
+                        <i class="fas fa-image"></i> PNG Images
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="summary-section" class="summary-section" style="display: none;">
+        <h2 class="summary-title">Data Overview</h2>
+        <div id="summary-stats" class="summary-stats">
+            <!-- Will be populated dynamically -->
+        </div>
+    </div>
+    
+    <div id="visualization-container" style="display: none;">
+        <div class="tabs">
+            <div class="tab active" data-section="demographics">Demographics</div>
+            <div class="tab" data-section="geographic">Geographic Distribution</div>
+            <div class="tab" data-section="clinical">Clinical Information</div>
+            <div class="tab" data-section="temporal">Temporal Analysis</div>
+            <div class="tab" data-section="vaccine">Vaccine Analysis</div>
+        </div>
+        
+        <!-- Demographics Section -->
+        <div id="demographics-section" class="chart-section active">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Sex Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="sex-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="sex-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="sex-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Age Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="age-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="age-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="age-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Age Units Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="age-units-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="age-units-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="age-units-chart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+        
+        <!-- Geographic Distribution Section -->
+        <div id="geographic-section" class="chart-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Provinces Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="provinces-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="provinces-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="provinces-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Regional Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="region-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="region-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="region-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Districts Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="districts-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="districts-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="districts-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Health Facilities Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="facilities-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="facilities-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="facilities-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Organization Level Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="org-level-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="org-level-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="org-level-chart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+        
+        <!-- Clinical Information Section -->
+        <div id="clinical-section" class="chart-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Adverse Events Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="adverse-events-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="adverse-events-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="adverse-events-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Serious Event Distribution</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="serious-event-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="serious-event-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="serious-event-chart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+        
+        <!-- Temporal Analysis Section -->
+        <div id="temporal-section" class="chart-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">
+                        Gap Between Vaccination and Report Date
+                        <div class="tooltip-container">
+                            <i class="fas fa-info-circle tooltip-icon"></i>
+                            <span class="tooltip-text">Shows the number of days between when the vaccination was administered and when the adverse event was reported.</span>
+                        </div>
+                    </h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="vaccination-report-gap-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="vaccination-report-gap-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="vaccination-report-gap-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Reports Over Time</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="reports-time-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="reports-time-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="reports-time-chart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+        
+        <!-- Vaccine Analysis Section -->
+        <div id="vaccine-section" class="chart-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Cases by Vaccine</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="vaccine-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="vaccine-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="vaccine-chart" class="chart-canvas"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Adverse Events by Vaccine</h3>
+                    <div class="chart-actions">
+                        <button class="download-chart" data-chart="vaccine-adverse-chart">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="maximize-chart" data-chart="vaccine-adverse-chart">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="vaccine-adverse-chart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Enhanced AEFI Data Visualization Tool &copy; 2025</p>
+    </footer>
+    
+    <!-- Scripts will be added separately -->
+<script>
+    ///////////////////////////////////////////////////////////
+// Global variables and initialization
+///////////////////////////////////////////////////////////
+let rawData = [];
+let filteredData = [];
+let activeCharts = {};
+let dateFormat = /^\d{8}$/; // Format like 20240530
+
+// Set up event listeners when the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Add fallback for Font Awesome
+    checkFontAwesome();
+    
+    // Set up main event listeners
+    document.getElementById('upload').addEventListener('change', handleFileUpload);
+    document.getElementById('apply-filters').addEventListener('click', applyFilters);
+    document.getElementById('reset-filters').addEventListener('click', resetFilters);
+    document.getElementById('export-data').addEventListener('click', toggleExportOptions);
+    
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetSection = this.getAttribute('data-section');
+            switchTab(targetSection);
+        });
+    });
+    
+    // Export options
+    document.querySelectorAll('.export-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const exportType = this.getAttribute('data-type');
+            exportData(exportType);
+            document.getElementById('export-options').classList.remove('active');
+        });
+    });
+    
+    // Download chart buttons
+    document.querySelectorAll('.download-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            const chartId = this.getAttribute('data-chart');
+            downloadChart(chartId);
+        });
+    });
+    
+    // Maximize chart buttons
+    document.querySelectorAll('.maximize-chart').forEach(button => {
+        button.addEventListener('click', function() {
+            const chartId = this.getAttribute('data-chart');
+            maximizeChart(chartId);
+        });
+    });
+    
+    // Close export options when clicking elsewhere
+    document.addEventListener('click', function(event) {
+        const exportBtn = document.getElementById('export-data');
+        const exportOptions = document.getElementById('export-options');
+        
+        if (!exportBtn.contains(event.target) && !exportOptions.contains(event.target)) {
+            exportOptions.classList.remove('active');
+        }
+    });
+});
+
+///////////////////////////////////////////////////////////
+// Font Awesome Fallback
+///////////////////////////////////////////////////////////
+function checkFontAwesome() {
+    // Test if Font Awesome loaded by checking if an icon renders
+    const testIcon = document.createElement('i');
+    testIcon.className = 'fas fa-file-excel';
+    testIcon.style.visibility = 'hidden';
+    document.body.appendChild(testIcon);
+    
+    // Get computed style and check if it's different from a regular text element
+    const styles = window.getComputedStyle(testIcon);
+    const fontFamily = styles.getPropertyValue('font-family');
+    
+    // If Font Awesome failed to load, use text fallbacks
+    if (!fontFamily.includes('Font Awesome') && !fontFamily.includes('FontAwesome')) {
+        console.warn('Font Awesome not loaded, using text fallbacks');
+        document.querySelectorAll('.file-label i').forEach(icon => {
+            icon.textContent = '📄';
+            icon.className = 'icon-fallback';
+        });
+        
+        document.querySelectorAll('.btn-primary i, .btn-secondary i').forEach(icon => {
+            const classList = icon.className;
+            if (classList.includes('fa-filter')) icon.textContent = '🔍';
+            else if (classList.includes('fa-undo')) icon.textContent = '↺';
+            else if (classList.includes('fa-download')) icon.textContent = '⬇️';
+            icon.className = 'icon-fallback';
+        });
+        
+        document.querySelectorAll('.chart-actions i').forEach(icon => {
+            const classList = icon.className;
+            if (classList.includes('fa-download')) icon.textContent = '⬇️';
+            else if (classList.includes('fa-expand')) icon.textContent = '⤢';
+            icon.className = 'icon-fallback';
+        });
+        
+        document.querySelectorAll('.export-option i').forEach(icon => {
+            const classList = icon.className;
+            if (classList.includes('fa-file-pdf')) icon.textContent = '📄';
+            else if (classList.includes('fa-file-csv')) icon.textContent = '📊';
+            else if (classList.includes('fa-image')) icon.textContent = '🖼️';
+            icon.className = 'icon-fallback';
+        });
+        
+        // Add a style for the fallback icons
+        const style = document.createElement('style');
+        style.textContent = `
+            .icon-fallback {
+                margin-right: 8px;
+                font-style: normal;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Clean up
+    document.body.removeChild(testIcon);
+}
+
+///////////////////////////////////////////////////////////
+// File handling and data processing
+///////////////////////////////////////////////////////////
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    showLoading('Reading file...');
+    
+    const fileInfo = document.getElementById('file-info');
+    fileInfo.textContent = `File: ${file.name} (${formatFileSize(file.size)})`;
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            showLoading('Processing data...');
+            
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {
+                type: 'array',
+                cellDates: true,
+                cellStyles: true, 
+                cellNF: true
+            });
+            
+            // Find the AEFI line listing sheet
+            const aefiSheetName = findAefiSheet(workbook.SheetNames);
+            
+            if (!aefiSheetName) {
+                showError("Could not find AEFI line listing sheet in the file. Please check the file format.");
+                hideLoading();
+                return;
+            }
+            
+            const worksheet = workbook.Sheets[aefiSheetName];
+            
+            // Convert to JSON with header rows
+            rawData = XLSX.utils.sheet_to_json(worksheet, {
+                raw: true,
+                defval: null
+            });
+            
+            if (rawData.length === 0) {
+                showError("No data found in the Excel file.");
+                hideLoading();
+                return;
+            }
+            
+            console.log("Headers detected:", Object.keys(rawData[0]));
+            
+            // Process the data
+            processData(rawData);
+        } catch (error) {
+            console.error("Error processing file:", error);
+            showError(`Error processing file: ${error.message}`);
+            hideLoading();
+        }
+    };
+    
+    reader.onerror = function() {
+        showError("Failed to read the file.");
+        hideLoading();
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+// Find the sheet that contains AEFI line listing data
+function findAefiSheet(sheetNames) {
+    // First, try exact matches
+    for (const name of sheetNames) {
+        if (name === "AEFI line listing" || name === "AEFI_linelist" || name === "AEFI line listingTwo") {
+            return name;
+        }
+    }
+    
+    // If no exact match, try looser matching
+    for (const name of sheetNames) {
+        if (name.toLowerCase().includes('aefi') && 
+            (name.toLowerCase().includes('line') || 
+             name.toLowerCase().includes('list'))) {
+            return name;
+        }
+    }
+    
+    // If still no match, return the first sheet as a fallback
+    return sheetNames.length > 0 ? sheetNames[0] : null;
+}
+
+function processData(data) {
+    showLoading('Analyzing data...');
+    
+    // Make a copy for filtering
+    filteredData = [...data];
+    
+    // Pre-process dates in the data
+    preprocessDates(filteredData);
+    
+    // Calculate additional metrics if needed
+    calculateAdditionalMetrics(filteredData);
+    
+    // Generate summary statistics
+    generateSummaryStats(filteredData);
+    
+    // Populate filter options
+    populateFilterOptions(filteredData);
+    
+    // Generate all charts
+    generateAllCharts(filteredData);
+    
+    // Show UI elements
+    document.getElementById('filter-section').style.display = 'flex';
+    document.getElementById('summary-section').style.display = 'block';
+    document.getElementById('visualization-container').style.display = 'block';
+    
+    // Show success message
+    showSuccess(`Successfully processed ${data.length} records.`);
+    
+    hideLoading();
+}
+
+// Pre-process dates in the data to convert them to JavaScript Date objects
+function preprocessDates(data) {
+    // Fields that contain dates
+    const dateFields = [
+        'Date of birth', 
+        'Date of vaccination', 
+        'Date of onset',
+        'Date of notification',
+        'Date of report',
+        'Date investigation planned',
+        'Date investigation done',
+        'Date report received at national level',
+        'Date final classification done',
+        'VigiFlow creation date'
+    ];
+    
+    // Process each record
+    data.forEach(record => {
+        dateFields.forEach(field => {
+            if (record[field]) {
+                record[field] = parseDate(record[field]);
+            }
+        });
+        
+        // Calculate age if missing but Date of birth exists
+        if (!record['Age'] && record['Date of birth']) {
+            const birthDate = record['Date of birth'];
+            if (birthDate instanceof Date) {
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                
+                // Adjust age if birthday hasn't occurred yet this year
+                if (today.getMonth() < birthDate.getMonth() || 
+                    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                record['Age'] = age;
+                if (!record['Age unit']) {
+                    record['Age unit'] = 'Years';
+                }
+            }
+        }
+    });
+}
+
+// Calculate additional metrics that might be useful for analysis
+function calculateAdditionalMetrics(data) {
+    data.forEach(record => {
+        // Calculate days between vaccination and report
+        if (record['Date of vaccination'] instanceof Date && 
+            record['Date of report'] instanceof Date) {
+            
+            const vaccinationDate = record['Date of vaccination'];
+            const reportDate = record['Date of report'];
+            
+            // Add calculated field
+            record['Vaccination to Report Interval (days)'] = 
+                Math.round((reportDate - vaccinationDate) / (1000 * 60 * 60 * 24));
+        }
+        
+        // Calculate days between onset and report
+        if (record['Date of onset'] instanceof Date && 
+            record['Date of report'] instanceof Date) {
+            
+            const onsetDate = record['Date of onset'];
+            const reportDate = record['Date of report'];
+            
+            // Add calculated field
+            record['Onset to Report Interval (days)'] = 
+                Math.round((reportDate - onsetDate) / (1000 * 60 * 60 * 24));
+        }
+    });
+}
+
+function populateFilterOptions(data) {
+    // Populate region filter
+    const regionSelect = document.getElementById('region-filter');
+    clearSelectOptions(regionSelect, true);
+    
+    const regions = getUniqueValues(data, 'Created by organisation level 3');
+    regions.forEach(region => {
+        if (region) {
+            const option = document.createElement('option');
+            option.value = region;
+            option.textContent = region;
+            regionSelect.appendChild(option);
+        }
+    });
+    
+    // Populate vaccine filter
+    const vaccineSelect = document.getElementById('vaccine-filter');
+    clearSelectOptions(vaccineSelect, true);
+    
+    const vaccines = getUniqueValues(data, 'Vaccine');
+    vaccines.forEach(vaccine => {
+        if (vaccine) {
+            const option = document.createElement('option');
+            option.value = vaccine;
+            option.textContent = vaccine;
+            vaccineSelect.appendChild(option);
+        }
+    });
+}
+
+///////////////////////////////////////////////////////////
+// Utility Functions
+///////////////////////////////////////////////////////////
+function getUniqueValues(data, field) {
+    const values = new Set();
+    data.forEach(row => {
+        if (row[field]) {
+            values.add(row[field]);
+        }
+    });
+    return Array.from(values).sort();
+}
+
+function clearSelectOptions(select, keepFirst) {
+    const optionsToKeep = keepFirst ? 1 : 0;
+    while (select.options.length > optionsToKeep) {
+        select.remove(optionsToKeep);
+    }
+}
+
+function parseDate(value) {
+    if (!value) return null;
+    
+    // Handle YYYYMMDD format (number or string)
+    if (typeof value === 'number' || (typeof value === 'string' && /^\d{8}$/.test(value))) {
+        const str = String(value);
+        const year = parseInt(str.substring(0, 4));
+        const month = parseInt(str.substring(4, 6)) - 1; // zero-based months
+        const day = parseInt(str.substring(6, 8));
+        return new Date(year, month, day);
+    }
+    
+    // Handle Excel date serial number
+    if (typeof value === 'number' && value > 1000 && value < 100000) {
+        try {
+            const excelDate = XLSX.SSF.parse_date_code(value);
+            if (excelDate) {
+                return new Date(excelDate.y, excelDate.m - 1, excelDate.d);
+            }
+        } catch (e) {
+            console.warn("Failed to parse Excel date:", value);
+        }
+    }
+    
+    // Handle Date objects
+    if (value instanceof Date) {
+        return new Date(value);
+    }
+    
+    // Handle string dates in various formats
+    if (typeof value === 'string') {
+        const cleaned = value.trim();
+        
+        // DD-MM-YYYY or DD/MM/YYYY
+        const match = cleaned.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$/);
+        if (match) {
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10) - 1;
+            const year = parseInt(match[3], 10);
+            const fullYear = year < 100 ? 2000 + year : year;
+            return new Date(fullYear, month, day);
+        }
+        
+        // Try native JS parsing as a fallback
+        const d = new Date(cleaned);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    
+    return null;
+}
+
+function countField(data, field) {
+    const counts = {};
+    data.forEach(row => {
+        if (row[field]) {
+            const value = row[field].toString().trim();
+            counts[value] = (counts[value] || 0) + 1;
+        } else if (counts['Unknown'] !== undefined) {
+            counts['Unknown']++;
+        } else {
+            counts['Unknown'] = 1;
+        }
+    });
+    return counts;
+}
+
+function findColumnByPattern(headers, patterns) {
+    for (const pattern of patterns) {
+        const match = headers.find(h => 
+            typeof h === 'string' && h.toLowerCase().includes(pattern.toLowerCase()));
+        if (match) return match;
+    }
+    return null;
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function getMonthName(monthIndex) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return months[monthIndex];
+}
+
+function formatValueForCSV(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    
+    if (value instanceof Date) {
+        return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    }
+    
+    return String(value);
+}
+
+///////////////////////////////////////////////////////////
+// Status and Notification Functions
+///////////////////////////////////////////////////////////
+function showLoading(message) {
+    const loading = document.getElementById('loading');
+    const loadingMessage = document.getElementById('loading-message');
+    loadingMessage.textContent = message || 'Processing...';
+    loading.classList.add('active');
+}
+
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    loading.classList.remove('active');
+}
+
+function showError(message) {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.className = 'status error';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        status.className = 'status';
+    }, 5000);
+}
+
+function showSuccess(message) {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.className = 'status success';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        status.className = 'status';
+    }, 3000);
+}
+
+///////////////////////////////////////////////////////////
+// UI Interaction Functions
+///////////////////////////////////////////////////////////
+function switchTab(targetSection) {
+    // Update tab states
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.getAttribute('data-section') === targetSection) {
+            tab.classList.add('active');
+        }
+    });
+    
+    // Update section visibility
+    document.querySelectorAll('.chart-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    document.getElementById(`${targetSection}-section`).classList.add('active');
+}
+
+function toggleExportOptions(event) {
+    event.stopPropagation();
+    const exportOptions = document.getElementById('export-options');
+    exportOptions.classList.toggle('active');
+    
+    // Position the dropdown below the button
+    const buttonRect = event.target.getBoundingClientRect();
+    exportOptions.style.top = `${buttonRect.bottom + window.scrollY}px`;
+    exportOptions.style.left = `${buttonRect.left + window.scrollX}px`;
+}
+
+function applyFilters() {
+    showLoading('Applying filters...');
+    
+    // Get filter values
+    const regionFilter = document.getElementById('region-filter').value;
+    const dateRange = document.getElementById('date-range').value;
+    const vaccineFilter = document.getElementById('vaccine-filter').value;
+    
+    // Apply filters
+    filteredData = [...rawData];
+    
+    // Region filter
+    if (regionFilter !== 'all') {
+        filteredData = filteredData.filter(row => 
+            row['Created by organisation level 3'] === regionFilter);
+    }
+    
+    // Vaccine filter
+    if (vaccineFilter !== 'all') {
+        filteredData = filteredData.filter(row => 
+            row['Vaccine'] === vaccineFilter);
+    }
+    
+    // Date range filter
+    if (dateRange !== 'all') {
+        // Find report date field
+        const now = new Date();
+        let startDate;
+        
+        switch (dateRange) {
+            case 'last30':
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 30);
+                break;
+            case 'last90':
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 90);
+                break;
+            case 'last180':
+                startDate = new Date(now);
+                startDate.setDate(now.getDate() - 180);
+                break;
+            case 'custom':
+                // Custom date range would be implemented here
+                break;
+        }
+        
+        if (startDate) {
+            filteredData = filteredData.filter(row => {
+                const reportDate = row['Date of report'];
+                return reportDate && reportDate >= startDate;
+            });
+        }
+    }
+    
+    // Update visualizations with filtered data
+    generateAllCharts(filteredData);
+    generateSummaryStats(filteredData);
+    
+    showSuccess(`Applied filters: ${filteredData.length} records matching criteria.`);
+    hideLoading();
+}
+
+function resetFilters() {
+    // Reset filter inputs
+    document.getElementById('region-filter').value = 'all';
+    document.getElementById('date-range').value = 'all';
+    document.getElementById('vaccine-filter').value = 'all';
+    
+    // Restore original data
+    filteredData = [...rawData];
+    
+    // Update visualizations
+    generateAllCharts(rawData);
+    generateSummaryStats(rawData);
+    
+    showSuccess('Filters reset. Showing all data.');
+}
+
+function exportData(type) {
+    showLoading(`Preparing ${type.toUpperCase()} export...`);
+    
+    setTimeout(() => {
+        switch (type) {
+            case 'pdf':
+                exportToPDF();
+                break;
+            case 'csv':
+                exportToCSV();
+                break;
+            case 'png':
+                exportAllChartsToPNG();
+                break;
+        }
+        
+        hideLoading();
+    }, 100);
+}
+
+function exportToCSV() {
+    // Convert the current filtered data to CSV
+    const headers = Object.keys(filteredData[0] || {});
+    
+    let csvContent = headers.join(',') + '\r\n';
+    
+    filteredData.forEach(row => {
+        const values = headers.map(header => {
+            const value = row[header];
+            const valueStr = formatValueForCSV(value);
+            // Escape quotes and wrap in quotes if contains comma
+            return valueStr.includes(',') ? 
+                `"${valueStr.replace(/"/g, '""')}"` : 
+                valueStr;
+        });
+        csvContent += values.join(',') + '\r\n';
+    });
+    
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'aefi_data_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+/**
+ * Export visualization data and charts to a PDF document
+ * This function captures all visible charts and summary data
+ * and creates a professional PDF report
+ */
+function exportToPDF() {
+    showLoading('Generating PDF report...');
+    
+    // Initialize jsPDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentWidth = pageWidth - (margin * 2);
+    
+    // Set initial position
+    let yPos = margin;
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.setTextColor(44, 62, 80); // --primary color
+    doc.text('AEFI Data Visualization Report', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
+    
+    // Add generation date
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    const today = new Date();
+    doc.text(`Generated on: ${today.toLocaleString()}`, pageWidth / 2, yPos, { align: 'center' });
+    yPos += 15;
+    
+    // Add summary section
+    doc.setFontSize(14);
+    doc.setTextColor(44, 62, 80);
+    doc.text('Summary Statistics', margin, yPos);
+    yPos += 7;
+    
+    // Draw a line under the section title
+    doc.setDrawColor(52, 152, 219); // --secondary color
+    doc.line(margin, yPos, pageWidth - margin, yPos);
+    yPos += 10;
+    
+    // Get summary data
+    const summaryStats = document.getElementById('summary-stats');
+    const summaryCards = summaryStats.querySelectorAll('.stat-card');
+    
+    // Create a 2-column grid for summary stats
+    const colWidth = contentWidth / 2;
+    let currentCol = 0;
+    let startY = yPos;
+    
+    // Add each summary stat
+    summaryCards.forEach((card, index) => {
+        const title = card.querySelector('.stat-title').textContent;
+        const value = card.querySelector('.stat-value').textContent;
+        
+        const x = margin + (currentCol * colWidth);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text(title, x, yPos);
+        
+        doc.setFontSize(12);
+        doc.setTextColor(44, 62, 80);
+        doc.text(value, x, yPos + 6);
+        
+        // Switch to next column or row
+        currentCol = (currentCol + 1) % 2;
+        if (currentCol === 0) {
+            yPos += 15; // Move to next row
+        }
+    });
+    
+    // Ensure we're at the end of the summary section
+    if (currentCol !== 0) {
+        yPos += 15;
+    }
+    yPos += 10;
+    
+    // Function to add a chart to the PDF
+    async function addChartToPDF(chartId, title) {
+        // Check if we need a new page
+        if (yPos > pageHeight - 70) {
+            doc.addPage();
+            yPos = margin;
+        }
+        
+        // Add chart title
+        doc.setFontSize(12);
+        doc.setTextColor(44, 62, 80);
+        doc.text(title, margin, yPos);
+        yPos += 7;
+        
+        // Get chart canvas and convert to image
+        const canvas = document.getElementById(chartId);
+        if (!canvas) return;
+        
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        
+        // Calculate dimensions to fit the page width while maintaining aspect ratio
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const imgWidth = contentWidth;
+        const imgHeight = (canvasHeight * imgWidth) / canvasWidth;
+        
+        // Don't add if we're out of space - start a new page instead
+        if (yPos + imgHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+        }
+        
+        // Add image to PDF
+        try {
+            doc.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight);
+            yPos += imgHeight + 15; // Add space after the chart
+        } catch (e) {
+            console.error('Error adding chart to PDF:', e);
+            yPos += 5; // Still advance position a bit
+        }
+    }
+    
+    // Array of chart objects with id and title
+    const charts = [
+        { id: 'sex-chart', title: 'Sex Distribution' },
+        { id: 'age-chart', title: 'Age Distribution' },
+        { id: 'age-units-chart', title: 'Age Units Distribution' },
+        { id: 'provinces-chart', title: 'Provinces Distribution' },
+        { id: 'region-chart', title: 'Regional Distribution' },
+        { id: 'adverse-events-chart', title: 'Adverse Events Distribution' },
+        { id: 'serious-event-chart', title: 'Serious Event Distribution' },
+        { id: 'vaccination-report-gap-chart', title: 'Gap Between Vaccination and Report Date' },
+        { id: 'reports-time-chart', title: 'Reports Over Time' },
+        { id: 'vaccine-chart', title: 'Cases by Vaccine' }
+    ];
+    
+    // Process charts sequentially
+    (async function processCharts() {
+        for (const chart of charts) {
+            await addChartToPDF(chart.id, chart.title);
+        }
+        
+        // Add footer
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(
+                `AEFI Visualization Tool - Page ${i} of ${totalPages}`, 
+                pageWidth / 2, 
+                pageHeight - 10, 
+                { align: 'center' }
+            );
+        }
+        
+        // Save the PDF
+        const filename = `AEFI_Report_${today.toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+        
+        hideLoading();
+        showSuccess(`PDF report saved as ${filename}`);
+    })();
+}
+
+/**
+ * Export all charts as individual PNG images
+ * This function creates high-quality PNG images of each chart
+ * and triggers downloads for each one
+ */
+function exportAllChartsToPNG() {
+    showLoading('Preparing chart images...');
+    
+    // List of chart IDs to export
+    const chartIds = [
+        'sex-chart',
+        'age-chart',
+        'age-units-chart',
+        'provinces-chart',
+        'region-chart',
+        'districts-chart',
+        'facilities-chart',
+        'org-level-chart',
+        'adverse-events-chart',
+        'serious-event-chart',
+        'vaccination-report-gap-chart',
+        'reports-time-chart',
+        'vaccine-chart',
+        'vaccine-adverse-chart'
+    ];
+    
+    // Helper function to get chart title
+    function getChartTitle(chartId) {
+        // Find the chart container that contains this chart
+        const canvas = document.getElementById(chartId);
+        if (!canvas) return chartId;
+        
+        const container = canvas.closest('.chart-container');
+        if (!container) return chartId;
+        
+        const titleElement = container.querySelector('.chart-title');
+        return titleElement ? titleElement.textContent.trim() : chartId;
+    }
+    
+    // Process each chart
+    let downloadCount = 0;
+    const totalCharts = chartIds.length;
+    
+    chartIds.forEach(chartId => {
+        const chart = activeCharts[chartId];
+        if (!chart) {
+            downloadCount++;
+            if (downloadCount === totalCharts) {
+                hideLoading();
+                showSuccess(`Exported ${downloadCount} chart images`);
+            }
+            return;
+        }
+        
+        // Get chart title for filename
+        const title = getChartTitle(chartId);
+        const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        
+        // Create high-quality image and trigger download
+        try {
+            // Set chart to be responsive: false temporarily for better quality export
+            const previousOptions = chart.options.responsive;
+            chart.options.responsive = false;
+            chart.resize(1200, 800); // Higher resolution
+            
+            // Get image data
+            const link = document.createElement('a');
+            link.download = `AEFI_${safeTitle}.png`;
+            link.href = chart.toBase64Image();
+            
+            // Restore original settings
+            chart.options.responsive = previousOptions;
+            chart.resize();
+            
+            // Trigger download
+            link.click();
+            downloadCount++;
+            
+            // Check if all downloads are complete
+            if (downloadCount === totalCharts) {
+                hideLoading();
+                showSuccess(`Exported ${downloadCount} chart images`);
+            }
+        } catch (e) {
+            console.error(`Error exporting chart ${chartId}:`, e);
+            downloadCount++;
+            
+            if (downloadCount === totalCharts) {
+                hideLoading();
+                showSuccess(`Exported ${downloadCount} chart images`);
+            }
+        }
+    });
+    
+    // Fallback in case no charts were found
+    if (totalCharts === 0) {
+        hideLoading();
+        showError('No charts available to export');
+    }
+}
+
+function downloadChart(chartId) {
+    const chart = activeCharts[chartId];
+    if (!chart) return;
+    
+    const link = document.createElement('a');
+    link.download = `aefi_${chartId}.png`;
+    link.href = chart.toBase64Image();
+    link.click();
+}
+
+function maximizeChart(chartId) {
+    // Implementation would create a modal with a larger version of the chart
+    alert(`Chart maximize functionality would be implemented for: ${chartId}`);
+}
+
+///////////////////////////////////////////////////////////
+// Chart Generation Functions
+///////////////////////////////////////////////////////////
+function generateAllCharts(data) {
+    // Clear existing charts
+    Object.values(activeCharts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+    activeCharts = {};
+    
+    // Demographics section
+    generateSexDistribution(data);
+    generateAgeDistribution(data);
+    generateAgeUnitsDistribution(data);
+    
+    // Geographic section
+    generateProvincesDistribution(data);
+    generateRegionDistribution(data);
+    generateDistrictsDistribution(data);
+    generateFacilitiesDistribution(data);
+    generateOrgLevelDistribution(data);
+    
+    // Clinical section
+    generateAdverseEventsDistribution(data);
+    generateSeriousEventDistribution(data);
+    
+    // Temporal section
+    generateVaccinationReportGap(data);
+    generateReportsOverTime(data);
+    
+    // Vaccine section
+    generateVaccineDistribution(data);
+    generateVaccineAdverseEvents(data);
+}
+
+///////////////////////////////////////////////////////////
+// Demographics Charts
+///////////////////////////////////////////////////////////
+function generateSexDistribution(data) {
+    const sexData = countField(data, 'Sex');
+    const ctx = document.getElementById('sex-chart').getContext('2d');
+    
+    activeCharts['sex-chart'] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(sexData),
+            datasets: [{
+                data: Object.values(sexData),
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 206, 86, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateAgeDistribution(data) {
+    const ages = [];
+    data.forEach(row => {
+        if (row.Age && !isNaN(row.Age)) {
+            // Convert all ages to years for consistency
+            let ageInYears = parseFloat(row.Age);
+            if (row['Age unit'] === 'Months') {
+                ageInYears = ageInYears / 12;
+            } else if (row['Age unit'] === 'Days') {
+                ageInYears = ageInYears / 365;
+            }
+            ages.push(ageInYears);
+        }
+    });
+    
+    // Define age groups
+    const ageGroups = {
+        'Under 1': 0,
+        '1-4': 0,
+        '5-14': 0,
+        '15-24': 0,
+        '25-44': 0,
+        '45-64': 0,
+        '65+': 0
+    };
+    
+    ages.forEach(age => {
+        if (age < 1) ageGroups['Under 1']++;
+        else if (age < 5) ageGroups['1-4']++;
+        else if (age < 15) ageGroups['5-14']++;
+        else if (age < 25) ageGroups['15-24']++;
+        else if (age < 45) ageGroups['25-44']++;
+        else if (age < 65) ageGroups['45-64']++;
+        else ageGroups['65+']++;
+    });
+    
+    const ctx = document.getElementById('age-chart').getContext('2d');
+    
+    activeCharts['age-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(ageGroups),
+            datasets: [{
+                label: 'Age Distribution',
+                data: Object.values(ageGroups),
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cases'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Age Group (Years)'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `Count: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateAgeUnitsDistribution(data) {
+    const ageUnits = countField(data, 'Age unit');
+    const ctx = document.getElementById('age-units-chart').getContext('2d');
+    
+    activeCharts['age-units-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(ageUnits),
+            datasets: [{
+                label: 'Age Units Used',
+                data: Object.values(ageUnits),
+                backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count'
+                    }
+                }
+            }
+        }
+    });
+}
+
+///////////////////////////////////////////////////////////
+// Geographic Charts
+///////////////////////////////////////////////////////////
+function generateProvincesDistribution(data) {
+    const provinces = countField(data, 'Patient state or province');
+    const ctx = document.getElementById('provinces-chart').getContext('2d');
+    
+    // Sort provinces by count descending
+    const sortedProvinces = Object.entries(provinces)
+        .sort((a, b) => b[1] - a[1])
+        .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+        }, {});
+    
+    activeCharts['provinces-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(sortedProvinces),
+            datasets: [{
+                label: 'Cases by Province',
+                data: Object.values(sortedProvinces),
+                backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cases'
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateRegionDistribution(data) {
+    const regions = countField(data, 'Created by organisation level 3');
+    const ctx = document.getElementById('region-chart').getContext('2d');
+    
+    // Sort regions by count descending
+    const sortedRegions = Object.entries(regions)
+        .sort((a, b) => b[1] - a[1])
+        .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+        }, {});
+    
+    activeCharts['region-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(sortedRegions),
+            datasets: [{
+                label: 'Cases by Region',
+                data: Object.values(sortedRegions),
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cases'
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+}
+
+function generateDistrictsDistribution(data) {
+    const districts = countField(data, 'Delegated to organisation');
+    
+    // Get top 15 districts by count
+    const topDistricts = Object.entries(districts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+        }, {});
+    
+    const ctx = document.getElementById('districts-chart').getContext('2d');
+    
+    activeCharts['districts-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(topDistricts),
+            datasets: [{
+                label: 'Top 15 Districts',
+                data: Object.values(topDistricts),
+                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Cases'
+                    }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Top 15 Districts by Number of Cases'
+                }
+            }
+        }
+    });
+}
+
+function generateFacilitiesDistribution(data) {
+   const facilities = countField(data, 'Health facility name');
+   
+   // Get top 15 facilities by count
+   const topFacilities = Object.entries(facilities)
+       .sort((a, b) => b[1] - a[1])
+       .slice(0, 15)
+       .reduce((acc, [key, value]) => {
+           acc[key] = value;
+           return acc;
+       }, {});
+   
+   const ctx = document.getElementById('facilities-chart').getContext('2d');
+   
+   activeCharts['facilities-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: Object.keys(topFacilities),
+           datasets: [{
+               label: 'Top 15 Facilities',
+               data: Object.values(topFacilities),
+               backgroundColor: 'rgba(75, 192, 192, 0.7)',
+               borderColor: 'rgba(75, 192, 192, 1)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   }
+               },
+               x: {
+                   ticks: {
+                       autoSkip: false,
+                       maxRotation: 45,
+                       minRotation: 45
+                   }
+               }
+           },
+           plugins: {
+               title: {
+                   display: true,
+                   text: 'Top 15 Health Facilities by Number of Cases'
+               }
+           }
+       }
+   });
+}
+
+function generateOrgLevelDistribution(data) {
+   const orgLevels = countField(data, 'Created by organisation level 2');
+   const ctx = document.getElementById('org-level-chart').getContext('2d');
+   
+   activeCharts['org-level-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: Object.keys(orgLevels),
+           datasets: [{
+               label: 'Cases by Zone',
+               data: Object.values(orgLevels),
+               backgroundColor: 'rgba(153, 102, 255, 0.7)',
+               borderColor: 'rgba(153, 102, 255, 1)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   }
+               }
+           }
+       }
+   });
+}
+
+///////////////////////////////////////////////////////////
+// Clinical Charts
+///////////////////////////////////////////////////////////
+function generateAdverseEventsDistribution(data) {
+   const adverseEvents = countField(data, 'Adverse event');
+   
+   // Get top 15 adverse events by count
+   const topEvents = Object.entries(adverseEvents)
+       .sort((a, b) => b[1] - a[1])
+       .slice(0, 15)
+       .reduce((acc, [key, value]) => {
+           acc[key] = value;
+           return acc;
+       }, {});
+   
+   const ctx = document.getElementById('adverse-events-chart').getContext('2d');
+   
+   activeCharts['adverse-events-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: Object.keys(topEvents),
+           datasets: [{
+               label: 'Top 15 Adverse Events',
+               data: Object.values(topEvents),
+               backgroundColor: 'rgba(255, 206, 86, 0.7)',
+               borderColor: 'rgba(255, 206, 86, 1)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           indexAxis: 'y',
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               x: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   }
+               }
+           },
+           plugins: {
+               title: {
+                   display: true,
+                   text: 'Top 15 Adverse Events by Frequency'
+               }
+           }
+       }
+   });
+}
+
+function generateSeriousEventDistribution(data) {
+   const seriousData = countField(data, 'Serious');
+   const ctx = document.getElementById('serious-event-chart').getContext('2d');
+   
+   activeCharts['serious-event-chart'] = new Chart(ctx, {
+       type: 'pie',
+       data: {
+           labels: Object.keys(seriousData),
+           datasets: [{
+               data: Object.values(seriousData),
+               backgroundColor: [
+                   'rgba(255, 99, 132, 0.7)',
+                   'rgba(75, 192, 192, 0.7)',
+                   'rgba(255, 206, 86, 0.7)'
+               ],
+               borderColor: [
+                   'rgba(255, 99, 132, 1)',
+                   'rgba(75, 192, 192, 1)',
+                   'rgba(255, 206, 86, 1)'
+               ],
+               borderWidth: 1
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           plugins: {
+               legend: {
+                   position: 'top',
+               },
+               tooltip: {
+                   callbacks: {
+                       label: function(context) {
+                           const label = context.label || '';
+                           const value = context.raw;
+                           const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                           const percentage = Math.round((value / total) * 100);
+                           return `${label}: ${value} (${percentage}%)`;
+                       }
+                   }
+               }
+           }
+       }
+   });
+}
+
+///////////////////////////////////////////////////////////
+// Temporal Charts
+///////////////////////////////////////////////////////////
+function generateVaccinationReportGap(data) {
+   // Check if the pre-calculated interval field exists
+   const hasIntervalField = data.some(row => 
+       row['Date of vaccination and Date of report Interval (days)'] !== undefined);
+   
+   let intervals = [];
+   
+   if (hasIntervalField) {
+       // Use pre-calculated intervals
+       intervals = data
+           .map(row => row['Date of vaccination and Date of report Interval (days)'])
+           .filter(val => val !== null && val !== undefined)
+           .map(val => parseInt(val));
+   } else {
+       // Calculate intervals manually
+       data.forEach(row => {
+           if (row['Date of vaccination'] instanceof Date && 
+               row['Date of report'] instanceof Date) {
+               
+               const vaccinationDate = row['Date of vaccination'];
+               const reportDate = row['Date of report'];
+               
+               const diff = Math.round((reportDate - vaccinationDate) / (1000 * 60 * 60 * 24));
+               if (diff >= 0) {
+                   intervals.push(diff);
+               }
+           }
+       });
+   }
+   
+   // Group intervals into buckets
+   const buckets = {
+       '0-1 day': 0,
+       '2-7 days': 0,
+       '8-14 days': 0,
+       '15-30 days': 0,
+       '31-90 days': 0,
+       '91-180 days': 0,
+       '181+ days': 0
+   };
+   
+   intervals.forEach(interval => {
+       if (interval <= 1) buckets['0-1 day']++;
+       else if (interval <= 7) buckets['2-7 days']++;
+       else if (interval <= 14) buckets['8-14 days']++;
+       else if (interval <= 30) buckets['15-30 days']++;
+       else if (interval <= 90) buckets['31-90 days']++;
+       else if (interval <= 180) buckets['91-180 days']++;
+       else buckets['181+ days']++;
+   });
+   
+   const ctx = document.getElementById('vaccination-report-gap-chart').getContext('2d');
+   
+   activeCharts['vaccination-report-gap-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: Object.keys(buckets),
+           datasets: [{
+               label: 'Days Between Vaccination & Report',
+               data: Object.values(buckets),
+               backgroundColor: 'rgba(54, 162, 235, 0.7)',
+               borderColor: 'rgba(54, 162, 235, 1)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   }
+               },
+               x: {
+                   title: {
+                       display: true,
+                       text: 'Time Between Vaccination and Report'
+                   }
+               }
+           },
+           plugins: {
+               tooltip: {
+                   callbacks: {
+                       label: function(context) {
+                           const value = context.raw;
+                           const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                           const percentage = Math.round((value / total) * 100);
+                           return `${value} cases (${percentage}%)`;
+                       }
+                   }
+               }
+           }
+       }
+   });
+}
+
+function generateReportsOverTime(data) {
+   // Group by month
+   const monthsData = {};
+   
+   data.forEach(row => {
+       if (row['Date of report'] instanceof Date) {
+           const date = row['Date of report'];
+           const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+           monthsData[monthKey] = (monthsData[monthKey] || 0) + 1;
+       }
+   });
+   
+   // Sort months chronologically
+   const sortedMonths = Object.keys(monthsData).sort();
+   
+   const ctx = document.getElementById('reports-time-chart').getContext('2d');
+   
+   activeCharts['reports-time-chart'] = new Chart(ctx, {
+       type: 'line',
+       data: {
+           labels: sortedMonths.map(m => {
+               const [year, month] = m.split('-');
+               return `${getMonthName(parseInt(month) - 1)} ${year}`;
+           }),
+           datasets: [{
+               label: 'AEFI Reports Over Time',
+               data: sortedMonths.map(m => monthsData[m]),
+               backgroundColor: 'rgba(153, 102, 255, 0.2)',
+               borderColor: 'rgba(153, 102, 255, 1)',
+               borderWidth: 2,
+               tension: 0.1,
+               fill: true
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Reports'
+                   }
+               },
+               x: {
+                   title: {
+                       display: true,
+                       text: 'Month'
+                   }
+               }
+           }
+       }
+   });
+}
+
+///////////////////////////////////////////////////////////
+// Vaccine Charts
+///////////////////////////////////////////////////////////
+function generateVaccineDistribution(data) {
+   const vaccines = countField(data, 'Vaccine');
+   
+   // Sort vaccines by count
+   const sortedVaccines = Object.entries(vaccines)
+       .sort((a, b) => b[1] - a[1])
+       .reduce((acc, [key, value]) => {
+           acc[key] = value;
+           return acc;
+       }, {});
+   
+   const ctx = document.getElementById('vaccine-chart').getContext('2d');
+   
+   activeCharts['vaccine-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: Object.keys(sortedVaccines),
+           datasets: [{
+               label: 'Cases by Vaccine',
+               data: Object.values(sortedVaccines),
+               backgroundColor: 'rgba(255, 159, 64, 0.7)',
+               borderColor: 'rgba(255, 159, 64, 1)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   }
+               },
+               x: {
+                   ticks: {
+                       autoSkip: false,
+                       maxRotation: 45,
+                       minRotation: 45
+                   }
+               }
+           }
+       }
+   });
+}
+
+function generateVaccineAdverseEvents(data) {
+   // Create a mapping of vaccines to adverse events
+   const vaccineEvents = {};
+   
+   data.forEach(row => {
+       const vaccine = row['Vaccine'];
+       const event = row['Adverse event'];
+       
+       if (!vaccine || !event) return;
+       
+       if (!vaccineEvents[vaccine]) {
+           vaccineEvents[vaccine] = {};
+       }
+       
+       vaccineEvents[vaccine][event] = (vaccineEvents[vaccine][event] || 0) + 1;
+   });
+   
+   // Get top 5 vaccines
+   const topVaccines = Object.entries(countField(data, 'Vaccine'))
+       .sort((a, b) => b[1] - a[1])
+       .slice(0, 5)
+       .map(entry => entry[0]);
+   
+   // Get top 10 adverse events overall
+   const allEvents = {};
+   data.forEach(row => {
+       const event = row['Adverse event'];
+       if (event) {
+           allEvents[event] = (allEvents[event] || 0) + 1;
+       }
+   });
+   
+   const topEvents = Object.entries(allEvents)
+       .sort((a, b) => b[1] - a[1])
+       .slice(0, 10)
+       .map(entry => entry[0]);
+   
+   // Create datasets for each vaccine
+   const datasets = topVaccines.map((vaccine, index) => {
+       // Use a color generator based on index
+       const hue = (index * 137) % 360;
+       
+       return {
+           label: vaccine,
+           data: topEvents.map(event => 
+               vaccineEvents[vaccine] && vaccineEvents[vaccine][event] 
+                   ? vaccineEvents[vaccine][event] 
+                   : 0
+           ),
+           backgroundColor: `hsla(${hue}, 70%, 60%, 0.7)`,
+           borderColor: `hsla(${hue}, 70%, 50%, 1)`,
+           borderWidth: 1
+       };
+   });
+   
+   const ctx = document.getElementById('vaccine-adverse-chart').getContext('2d');
+   
+   activeCharts['vaccine-adverse-chart'] = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: topEvents,
+           datasets: datasets
+       },
+       options: {
+           responsive: true,
+           maintainAspectRatio: false,
+           scales: {
+               y: {
+                   beginAtZero: true,
+                   title: {
+                       display: true,
+                       text: 'Number of Cases'
+                   },
+                   stacked: true
+               },
+               x: {
+                   stacked: true,
+                   ticks: {
+                       autoSkip: false,
+                       maxRotation: 45,
+                       minRotation: 45
+                   }
+               }
+           },
+           plugins: {
+               title: {
+                   display: true,
+                   text: 'Top 10 Adverse Events by Top 5 Vaccines'
+               },
+               tooltip: {
+                   callbacks: {
+                       title: function(context) {
+                           return context[0].label;
+                       },
+                       label: function(context) {
+                           return `${context.dataset.label}: ${context.raw} cases`;
+                       }
+                   }
+               }
+           }
+       }
+   });
+}
+
+///////////////////////////////////////////////////////////
+// Placeholder implementations for separate modules
+///////////////////////////////////////////////////////////
+function generateSummaryStats(data) {
+    const summaryStats = document.getElementById('summary-stats');
+    summaryStats.innerHTML = '';
+    
+    // Total cases
+    addStatCard(summaryStats, 'Total AEFI Cases', data.length);
+    
+    // Cases by sex
+    const sexData = countField(data, 'Sex');
+    Object.entries(sexData).forEach(([sex, count]) => {
+        if (sex && sex.trim() !== '') {
+            addStatCard(summaryStats, `${sex} Cases`, count);
+        }
+    });
+    
+    // Serious cases
+    const seriousData = countField(data, 'Serious');
+    if (seriousData['Yes']) {
+        addStatCard(summaryStats, 'Serious Cases', seriousData['Yes']);
+    }
+    
+    // Most common vaccine
+    const vaccines = countField(data, 'Vaccine');
+    const mostCommonVaccine = Object.entries(vaccines)
+        .sort((a, b) => b[1] - a[1])[0];
+    if (mostCommonVaccine) {
+        addStatCard(summaryStats, 'Most Common Vaccine', 
+            `${mostCommonVaccine[0]} (${mostCommonVaccine[1]} cases)`);
+    }
+    
+    // Most common adverse event
+    const events = countField(data, 'Adverse event');
+    const mostCommonEvent = Object.entries(events)
+        .sort((a, b) => b[1] - a[1])[0];
+    if (mostCommonEvent) {
+        addStatCard(summaryStats, 'Most Common Adverse Event', 
+            `${mostCommonEvent[0]} (${mostCommonEvent[1]} cases)`);
+    }
+    
+    // Average reporting delay if the interval field exists
+    const hasIntervalField = data.some(row => row['Date of vaccination and Date of report Interval (days)'] !== undefined);
+    
+    if (hasIntervalField) {
+        let totalDelay = 0;
+        let countWithIntervals = 0;
+        
+        data.forEach(row => {
+            const interval = row['Date of vaccination and Date of report Interval (days)'];
+            if (interval !== null && interval !== undefined) {
+                totalDelay += Number(interval);
+                countWithIntervals++;
+            }
+        });
+        
+        if (countWithIntervals > 0) {
+            const avgDelay = Math.round(totalDelay / countWithIntervals);
+            addStatCard(summaryStats, 'Average Reporting Delay', `${avgDelay} days`);
+        }
+    }
+}
+
+function addStatCard(container, title, value) {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    
+    const titleEl = document.createElement('div');
+    titleEl.className = 'stat-title';
+    titleEl.textContent = title;
+    
+    const valueEl = document.createElement('div');
+    valueEl.className = 'stat-value';
+    valueEl.textContent = value;
+    
+    card.appendChild(titleEl);
+    card.appendChild(valueEl);
+    container.appendChild(card);
+}
+
+/**
+ * Maximize a chart in a modal window
+ * This function creates a modal with a larger version of the selected chart
+ * @param {string} chartId - The ID of the chart to maximize
+ */
+ function maximizeChart(chartId) {
+    const chart = activeCharts[chartId];
+    if (!chart) return;
+    
+    // Get chart title
+    let title = chartId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const canvas = document.getElementById(chartId);
+    if (canvas) {
+        const container = canvas.closest('.chart-container');
+        if (container) {
+            const titleElement = container.querySelector('.chart-title');
+            if (titleElement) {
+                title = titleElement.textContent.trim();
+            }
+        }
+    }
+    
+    // Create modal container
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    modal.style.zIndex = '1001';
+    modal.style.display = 'flex';
+    modal.style.flexDirection = 'column';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.padding = '20px';
+    
+    // Create header
+    const header = document.createElement('div');
+    header.style.width = '90%';
+    header.style.maxWidth = '1200px';
+    header.style.backgroundColor = 'white';
+    header.style.borderTopLeftRadius = '10px';
+    header.style.borderTopRightRadius = '10px';
+    header.style.padding = '15px';
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.borderBottom = '1px solid #eee';
+    
+    // Add title
+    const titleElement = document.createElement('h3');
+    titleElement.textContent = title;
+    titleElement.style.margin = '0';
+    titleElement.style.color = '#2c3e50';
+    header.appendChild(titleElement);
+    
+    // Add close button
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '&times;';
+    closeButton.style.backgroundColor = 'transparent';
+    closeButton.style.border = 'none';
+    closeButton.style.fontSize = '24px';
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.color = '#2c3e50';
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    header.appendChild(closeButton);
+    
+    modal.appendChild(header);
+    
+    // Create container for the enlarged chart
+    const chartContainer = document.createElement('div');
+    chartContainer.style.width = '90%';
+    chartContainer.style.maxWidth = '1200px';
+    chartContainer.style.height = '80%';
+    chartContainer.style.backgroundColor = 'white';
+    chartContainer.style.padding = '20px';
+    chartContainer.style.borderBottomLeftRadius = '10px';
+    chartContainer.style.borderBottomRightRadius = '10px';
+    chartContainer.style.overflow = 'hidden';
+    
+    // Create canvas for the new chart
+    const enlargedCanvas = document.createElement('canvas');
+    enlargedCanvas.style.width = '100%';
+    enlargedCanvas.style.height = '100%';
+    chartContainer.appendChild(enlargedCanvas);
+    modal.appendChild(chartContainer);
+    
+    // Add modal to body
+    document.body.appendChild(modal);
+    
+    // Clone the chart to the new canvas
+    setTimeout(() => {
+        // Get original chart configuration
+        const originalConfig = chart.config;
+        
+        // Create new chart with same config but adjusted options
+        const enlargedChart = new Chart(enlargedCanvas.getContext('2d'), {
+            type: originalConfig.type,
+            data: JSON.parse(JSON.stringify(originalConfig.data)), // Deep clone data
+            options: {
+                ...JSON.parse(JSON.stringify(originalConfig.options)), // Deep clone options
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false, // Disable animation for faster rendering
+                plugins: {
+                    ...originalConfig.options.plugins,
+                    legend: {
+                        ...originalConfig.options.plugins?.legend,
+                        labels: {
+                            ...originalConfig.options.plugins?.legend?.labels,
+                            font: {
+                                size: 14 // Larger font for legend
+                            }
+                        }
+                    },
+                    tooltip: {
+                        ...originalConfig.options.plugins?.tooltip,
+                        titleFont: {
+                            size: 16
+                        },
+                        bodyFont: {
+                            size: 14
+                        }
+                    }
+                },
+                scales: originalConfig.options.scales ? {
+                    ...originalConfig.options.scales,
+                    x: {
+                        ...originalConfig.options.scales.x,
+                        ticks: {
+                            ...originalConfig.options.scales.x?.ticks,
+                            font: {
+                                size: 12 // Larger font for x-axis
+                            }
+                        },
+                        title: {
+                            ...originalConfig.options.scales.x?.title,
+                            font: {
+                                size: 14 // Larger font for axis title
+                            }
+                        }
+                    },
+                    y: {
+                        ...originalConfig.options.scales.y,
+                        ticks: {
+                            ...originalConfig.options.scales.y?.ticks,
+                            font: {
+                                size: 12 // Larger font for y-axis
+                            }
+                        },
+                        title: {
+                            ...originalConfig.options.scales.y?.title,
+                            font: {
+                                size: 14 // Larger font for axis title
+                            }
+                        }
+                    }
+                } : undefined
+            }
+        });
+    }, 100);
+}
+</script>
+</body>
+</html>

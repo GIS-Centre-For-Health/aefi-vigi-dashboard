@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/D:\\projects\\Vegg\\aefi\\js/**)",
+      "Read(/D:\\projects\\Vegg\\aefi\\css/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
