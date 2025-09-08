@@ -140,3 +140,11 @@ vite.config.ts.timestamp-*
 
 # Markdown files
 *.md
+
+# SSH keys
+aefi_deploy_key
+aefi_deploy_key.pub
+.ssh/
+
+# Temporary Excel files
+~$*.xlsx
