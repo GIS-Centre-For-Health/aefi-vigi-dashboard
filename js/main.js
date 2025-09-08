@@ -95,6 +95,34 @@ function findAefiSheet(sheetNames) {
 function processData(data) {
     showLoading('Analyzing and normalizing data...');
     
+    const dataErrors = [];
+    const dateFields = [
+        'Date of birth', 'Date of vaccination', 'Date of onset',
+        'Date of notification', 'Date of report'
+    ];
+
+    // Pre-process and validate dates
+    data.forEach(row => {
+        const uniqueId = row['Worldwide unique id'] || 'Unknown';
+        dateFields.forEach(field => {
+            const originalValue = row[field];
+            if (originalValue) {
+                // Handle multiple dates in the same field, separated by newline or space
+                const dateEntries = String(originalValue).split(new RegExp('[\n\s]+'));
+                const parsedDates = dateEntries.map(dateStr => {
+                    const parsed = parseDate(dateStr, field, uniqueId);
+                    if (!parsed && dateStr.trim()) {
+                        dataErrors.push({ id: uniqueId, field: field, value: dateStr });
+                    }
+                    return parsed;
+                }).filter(d => d); // Filter out nulls
+
+                // Join valid dates back with a newline for consistency
+                row[field] = parsedDates.length > 0 ? parsedDates.map(d => d.toISOString().split('T')[0]).join('\n') : null;
+            }
+        });
+    });
+
     // Use the compatibility bridge to process data
     const processedData = processAEFIData(data);
     
@@ -119,7 +147,10 @@ function processData(data) {
     uploadLabel.style.backgroundColor = '#e9ecef';
     document.getElementById('file-label-text').textContent = 'File Loaded Successfully';
 
-    showSuccess(`Successfully processed ${data.length} records.`);
+    showDataErrors(dataErrors);
+    if (dataErrors.length === 0) {
+        showSuccess(`Successfully processed ${data.length} records.`);
+    }
     hideLoading();
 }
 
@@ -270,126 +301,145 @@ function generateAllCharts(data) {
     // Demographics
     generateSexDistribution(data);
     generateAgeDistribution(data);
+    generateAgeUnitDistribution(data);
     
     // Geographic
-    generateProvincesDistribution(data);
-    generateRegionDistribution(data);
+    generatePatientProvincesDistribution(data);
+    generateHealthFacilityProvincesDistribution(data);
+    generateDistrictDistribution(data);
     
     // Clinical
     generateAdverseEventsDistribution(data);
     generateSeriousEventDistribution(data);
+    generateSeriousReasonDistribution(data);
     
     // Temporal
-    generateVaccinationReportGap(data);
-    generateReportsOverTime(data);
+    generateTemporalAnalysis(data);
     
     // Vaccine
     generateVaccineDistribution(data);
     generateVaccineAdverseEvents(data);
 }
 
-function createChart(canvasId, type, chartData, options) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    activeCharts[canvasId] = new Chart(ctx, { type, data: chartData, options });
-}
-
 // Specific Chart Functions
 function generateSexDistribution(data) {
-    updateSexChart(data);
+    renderSexChart('sexChartContainer', data);
 }
 
 function generateAgeDistribution(data) {
-    const ageGroups = { '0-1': 0, '2-5': 0, '6-11': 0, '12-17': 0, '18-44': 0, '45-64': 0, '65+': 0, 'Unknown': 0 };
-    data.forEach(row => {
-        const age = row.NormalizedAge;
-        if (age === undefined || age === null) ageGroups['Unknown']++;
-        else if (age < 2) ageGroups['0-1']++;
-        else if (age < 6) ageGroups['2-5']++;
-        else if (age < 12) ageGroups['6-11']++;
-        else if (age < 18) ageGroups['12-17']++;
-        else if (age < 45) ageGroups['18-44']++;
-        else if (age < 65) ageGroups['45-64']++;
-        else ageGroups['65+']++;
-    });
-    createChartEnhanced('ageGroupChart', 'bar', {
-        labels: Object.keys(ageGroups),
-        datasets: [{ label: 'Age Distribution (Years)', data: Object.values(ageGroups), backgroundColor: '#2ecc71' }]
-    });
+    renderAgeDistributionChart('ageDistributionChartContainer', data);
 }
 
-function generateProvincesDistribution(data) {
-    const provinces = countField(data, 'Patient state or province');
-    createChartEnhanced('provincesChart', 'bar', {
-        labels: Object.keys(provinces),
-        datasets: [{ label: 'Cases by Province', data: Object.values(provinces), backgroundColor: '#e67e22' }]
-    });
+function generateAgeUnitDistribution(data) {
+    renderAgeUnitDistributionChart('ageUnitDistributionChartContainer', data);
 }
 
-function generateRegionDistribution(data) {
-    const regions = countField(data, 'Created by organisation level 3');
-    createChartEnhanced('regionChart', 'bar', {
-        labels: Object.keys(regions),
-        datasets: [{ label: 'Cases by Region', data: Object.values(regions), backgroundColor: '#9b59b6' }]
-    });
+function generatePatientProvincesDistribution(data) {
+    renderPatientProvinceDistribution('patientProvinceChartContainer', data);
+}
+
+function generateHealthFacilityProvincesDistribution(data) {
+    renderHealthFacilityProvinceDistribution('healthFacilityProvinceChartContainer', data);
+}
+
+function generateDistrictDistribution(data) {
+    renderDistrictDistribution('districtDistributionChartContainer', data);
 }
 
 function generateAdverseEventsDistribution(data) {
-    const events = countField(data, 'Adverse event');
-    const top15Events = Object.entries(events).sort((a, b) => b[1] - a[1]).slice(0, 15);
-    createChartEnhanced('adverseEventsChart', 'bar', {
-        labels: top15Events.map(e => e[0]),
-        datasets: [{ label: 'Top 15 Adverse Events', data: top15Events.map(e => e[1]), backgroundColor: '#e74c3c' }]
+    const events = {};
+    data.forEach(row => {
+        const eventField = row['Adverse event'];
+        if (eventField && typeof eventField === 'string') {
+            const splitEvents = eventField.split(/\r?\n/);
+            splitEvents.forEach(event => {
+                const trimmedEvent = event.trim();
+                if (trimmedEvent) {
+                    events[trimmedEvent] = (events[trimmedEvent] || 0) + 1;
+                }
+            });
+        }
     });
+    renderAdverseEventChart('adverseEventsChart', events);
 }
 
 function generateSeriousEventDistribution(data) {
-    const serious = countField(data, 'Serious');
-    createChartEnhanced('seriousnessChart', 'pie', {
-        labels: Object.keys(serious),
-        datasets: [{ data: Object.values(serious), backgroundColor: ['#f1c40f', '#34495e', '#95a5a6'] }]
-    });
-}
+    const seriousCounts = { 'Serious': 0, 'Not Serious': 0, 'Unknown': 0 };
 
-function generateVaccinationReportGap(data) {
-    const gaps = data.map(row => {
-        const vaccDate = parseDate(row['Date of vaccination']);
-        const reportDate = parseDate(row['Date of report']);
-        if (vaccDate && reportDate) {
-            return (reportDate - vaccDate) / (1000 * 60 * 60 * 24);
-        }
-        return null;
-    }).filter(gap => gap !== null && gap >= 0);
-
-    const gapGroups = { '0-7 Days': 0, '8-30 Days': 0, '31-90 Days': 0, '91+ Days': 0 };
-    gaps.forEach(d => {
-        if (d <= 7) gapGroups['0-7 Days']++;
-        else if (d <= 30) gapGroups['8-30 Days']++;
-        else if (d <= 90) gapGroups['31-90 Days']++;
-        else gapGroups['91+ Days']++;
-    });
-
-    createChartEnhanced('timeToOnsetChart', 'bar', {
-        labels: Object.keys(gapGroups),
-        datasets: [{ label: 'Days from Vaccination to Report', data: Object.values(gapGroups), backgroundColor: '#1abc9c' }]
-    });
-}
-
-function generateReportsOverTime(data) {
-    const reports = {};
     data.forEach(row => {
-        const reportDate = parseDate(row['Date of report']);
-        if (reportDate) {
-            const month = reportDate.toISOString().slice(0, 7);
-            reports[month] = (reports[month] || 0) + 1;
+        const seriousField = row['Serious'];
+        if (seriousField && typeof seriousField === 'string') {
+            const splitValues = seriousField.split(/\r?\n/);
+            
+            // If any value is 'yes', the entire case is serious.
+            const isSerious = splitValues.some(val => val.trim().toLowerCase() === 'yes');
+            
+            if (isSerious) {
+                seriousCounts['Serious']++;
+            } else {
+                // If it's not serious, check if it's explicitly 'no'.
+                const isNotSerious = splitValues.some(val => val.trim().toLowerCase() === 'no');
+                if (isNotSerious) {
+                    seriousCounts['Not Serious']++;
+                } else {
+                    seriousCounts['Unknown']++;
+                }
+            }
+        } else {
+            // If the field is empty or not a string, it's Unknown.
+            seriousCounts['Unknown']++;
         }
     });
-    const sortedMonths = Object.keys(reports).sort();
-    const sortedData = sortedMonths.map(month => reports[month]);
 
-    createChartEnhanced('reportsTimeChart', 'line', {
-        labels: sortedMonths,
-        datasets: [{ label: 'Reports per Month', data: sortedData, borderColor: '#3498db', fill: false }]
+    renderSeriousEventChart('seriousnessChart', seriousCounts);
+}
+
+function generateSeriousReasonDistribution(data) {
+    const reasonCounts = {
+        'Death': 0,
+        'Life threatening': 0,
+        'Caused / prolonged hospitalisation': 0,
+        'Disabling or incapacitating': 0,
+        'Congenital anomaly or birth defect': 0,
+        'Other medically important condition': 0
+    };
+
+    const seriousData = data.filter(row => {
+        const seriousField = row['Serious'];
+        if (seriousField && typeof seriousField === 'string') {
+            return seriousField.split(/\r?\n/).some(val => val.trim().toLowerCase() === 'yes');
+        }
+        return false;
     });
+
+    seriousData.forEach(row => {
+        const reasonField = row['Reason for serious'];
+        if (reasonField && typeof reasonField === 'string') {
+            const reasons = reasonField.split(/\r?\n|,/);
+            reasons.forEach(reason => {
+                const lowerReason = reason.trim().toLowerCase();
+                if (lowerReason.includes('death')) {
+                    reasonCounts['Death']++;
+                } else if (lowerReason.includes('life threatening')) {
+                    reasonCounts['Life threatening']++;
+                } else if (lowerReason.includes('hospitalis') || lowerReason.includes('hospitaliz')) {
+                    reasonCounts['Caused / prolonged hospitalisation']++;
+                } else if (lowerReason.includes('disabling') || lowerReason.includes('incapacitating')) {
+                    reasonCounts['Disabling or incapacitating']++;
+                } else if (lowerReason.includes('congenital') || lowerReason.includes('birth defect')) {
+                    reasonCounts['Congenital anomaly or birth defect']++;
+                } else if (lowerReason.includes('other medically important')) {
+                    reasonCounts['Other medically important condition']++;
+                }
+            });
+        }
+    });
+
+    renderSeriousReasonChart('seriousReasonChart', reasonCounts);
+}
+
+function generateTemporalAnalysis(data) {
+    renderTemporalAnalysisChart('temporalAnalysisChartContainer', data);
 }
 
 function generateVaccineDistribution(data) {
@@ -398,6 +448,11 @@ function generateVaccineDistribution(data) {
     createChartEnhanced('vaccineChart', 'bar', {
         labels: top15Vaccines.map(v => v[0]),
         datasets: [{ label: 'Top 15 Vaccines', data: top15Vaccines.map(v => v[1]), backgroundColor: '#2980b9' }]
+    }, {
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        }
     });
 }
 

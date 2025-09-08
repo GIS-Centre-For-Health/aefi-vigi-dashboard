@@ -9,11 +9,11 @@
     --accent: #4A90E2;            /* Bright blue - CTAs/highlights */
     --accent-hover: #357ABD;      /* Darker blue - hover states */
     
-    /* Semantic colors for AEFI severity */
-    --severity-mild: #2ecc71;     /* Success green - non-serious events */
-    --severity-serious: #f39c12;  /* Warning orange - serious events */
-    --severity-fatal: #e74c3c;    /* Danger red - fatal outcomes */
-    --severity-unknown: #95a5a6;  /* Gray - unknown/unreported */
+    /* Semantic colors for AEFI severity (Updated for charts) */
+    --severity-mild: #B08FA3;     /* Purple- non-serious events */
+    --severity-serious: #4A2C47;  /* Dark Purple - serious events */
+    --severity-fatal: #3D2841;    /* Red - fatal outcomes */
+    --severity-unknown: #E5E5E5;  /* Gray - unknown/unreported */
     
     /* UI Colors */
     --success: #2ecc71;
@@ -271,6 +271,67 @@ button {
     gap: 1.5rem;
 }
 
+.chart-container-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.chart-container-tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.chart-container-tab.active {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+    font-weight: bold;
+}
+
+.chart-container-tab:hover {
+    background-color: var(--bg-hover);
+}
+
+.chart-content, .table-content {
+    display: none; /* Hide by default */
+    flex: 1 1 auto;
+    position: relative;
+    min-height: 0;
+}
+
+.chart-content.active, .table-content.active {
+    display: flex; /* Show active content as a flex container */
+    flex-direction: column;
+}
+
+.table-content {
+    overflow-y: auto; /* Allow table to scroll if it overflows */
+}
+
+.table-content table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-content th, .table-content td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-content th {
+    background-color: var(--bg-tertiary);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
 /* --- Chart Containers --- */
 .chart-container {
     background: var(--card-bg);
@@ -282,6 +343,8 @@ button {
     position: relative; /* Required for Chart.js responsiveness */
     height: 560px; /* Responsive height based on viewport */
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .chart-card {
@@ -294,71 +357,315 @@ button {
     height: 400px;
 }
 
-.chart-header {
+/* Scoped styles for the province distribution chart with toggle */
+#provinceDistributionChartContainer .chart-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 15px;
-    align-items: left;
-    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+#provinceDistributionChartContainer .chart-title {
+    font-size: 1.2rem;
+    color: var(--primary);
+    margin: 0;
+}
+
+#provinceDistributionChartContainer .chart-toggle {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#provinceDistributionChartContainer .toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+#provinceDistributionChartContainer .toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+#provinceDistributionChartContainer .toggle-btn.active {
+    background: var(--primary-light);
+    color: var(--text-inverse);
+}
+
+#provinceDistributionChartContainer .chart-content-wrapper {
+    flex-grow: 1;
+    position: relative;
+}
+
+#provinceDistributionChartContainer .chart-content,
+#provinceDistributionChartContainer .table-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow: hidden;
+}
+
+#provinceDistributionChartContainer .chart-content.active,
+#provinceDistributionChartContainer .table-content.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#provinceDistributionChartContainer .data-table-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+#provinceDistributionChartContainer .data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#provinceDistributionChartContainer .data-table th,
+#provinceDistributionChartContainer .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#provinceDistributionChartContainer .data-table thead th {
+    background-color: var(--bg-tertiary);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#provinceDistributionChartContainer .data-table tbody tr:nth-child(even) {
+    background-color: var(--bg-hover);
+}
+
+#provinceDistributionChartContainer .data-table tbody tr:hover {
+    background-color: var(--primary-lighter);
+}
+
+/* Scoped styles for the district distribution chart with toggle */
+#districtDistributionChartContainer .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#districtDistributionChartContainer .chart-title {
+    font-size: 1.2rem;
+    color: var(--primary);
+    margin: 0;
+}
+
+#districtDistributionChartContainer .chart-toggle {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#districtDistributionChartContainer .toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+#districtDistributionChartContainer .toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+#districtDistributionChartContainer .toggle-btn.active {
+    background: var(--primary-light);
+    color: var(--text-inverse);
+}
+
+#districtDistributionChartContainer .chart-content-wrapper {
+    flex-grow: 1;
+    position: relative;
+}
+
+#districtDistributionChartContainer .chart-content,
+#districtDistributionChartContainer .table-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow: hidden;
+}
+
+#districtDistributionChartContainer .chart-content.active,
+#districtDistributionChartContainer .table-content.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#districtDistributionChartContainer .data-table-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+#districtDistributionChartContainer .data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#districtDistributionChartContainer .data-table th,
+#districtDistributionChartContainer .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#districtDistributionChartContainer .data-table thead th {
+    background-color: var(--bg-tertiary);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#districtDistributionChartContainer .data-table tbody tr:nth-child(even) {
+    background-color: var(--bg-hover);
+}
+
+#districtDistributionChartContainer .data-table tbody tr:hover {
+    background-color: var(--primary-lighter);
+}
+
+/* Scoped styles for the health facility province distribution chart with toggle */
+#healthFacilityProvinceChartContainer .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#healthFacilityProvinceChartContainer .chart-title {
+    font-size: 1.2rem;
+    color: var(--primary);
+    margin: 0;
+}
+
+#healthFacilityProvinceChartContainer .chart-toggle {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#healthFacilityProvinceChartContainer .toggle-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+#healthFacilityProvinceChartContainer .toggle-btn:hover {
+    background: var(--bg-hover);
+}
+
+#healthFacilityProvinceChartContainer .toggle-btn.active {
+    background: var(--primary-light);
+    color: var(--text-inverse);
+}
+
+#healthFacilityProvinceChartContainer .chart-content-wrapper {
+    flex-grow: 1;
+    position: relative;
+}
+
+#healthFacilityProvinceChartContainer .chart-content,
+#healthFacilityProvinceChartContainer .table-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow: hidden;
+}
+
+#healthFacilityProvinceChartContainer .chart-content.active,
+#healthFacilityProvinceChartContainer .table-content.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+#healthFacilityProvinceChartContainer .data-table-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+#healthFacilityProvinceChartContainer .data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#healthFacilityProvinceChartContainer .data-table th,
+#healthFacilityProvinceChartContainer .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#healthFacilityProvinceChartContainer .data-table thead th {
+    background-color: var(--bg-tertiary);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+#healthFacilityProvinceChartContainer .data-table tbody tr:nth-child(even) {
+    background-color: var(--bg-hover);
+}
+
+#healthFacilityProvinceChartContainer .data-table tbody tr:hover {
+    background-color: var(--primary-lighter);
+}
+
+/* Generic styles for chart headers in other charts */
+.chart-header {
+    margin-bottom: 15px;
 }
 
 .chart-title {
     font-size: 1.2rem;
     color: var(--primary);
-    margin-top: 0;
-    margin-bottom: 1rem;
-    text-align: left;
+    margin: 0;
+    text-align: center; /* Default for other charts */
 }
 
-.chart-card h2 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    color: var(--text-primary);
-    text-align: center;
-}
-
-.chart-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.chart-actions button {
-    background: none;
-    border: none;
-    font-size: 1rem;
-    color: var(--secondary);
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 3px;
-    transition: all 0.2s;
-}
-
-.chart-actions button:hover {
-    background: rgba(52, 152, 219, 0.1);
-}
 
 /* --- Canvas Elements --- */
 .chart-container canvas {
-    flex: 1; /* Take up remaining space after header */
-    max-width: 100% !important;
-    max-height: calc(100% - 80px) !important; /* Account for header + legend */
-    height: auto !important;
-    width: auto !important;
-    min-height: 0; /* Allow canvas to shrink */
-}
-
-/* Chart.js wrapper div */
-.chart-container > div {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+    /* The canvas container is now correctly sized by flexbox.
+       Chart.js will handle the canvas size within that container. */
 }
 
 /* Ensure Chart.js maintains aspect ratio within container */
 .chart-container .chartjs-render-monitor {
-    max-height: calc(100% - 80px) !important; /* Account for header + legend */
     flex: 1;
 }
 
@@ -478,6 +785,45 @@ button {
     background: #f1f1f1;
 }
 
+/* --- Toast Notifications --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    color: var(--text-inverse);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    max-width: 400px;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-success {
+    background-color: var(--success);
+}
+
+.toast-error {
+    background-color: #c0392b; /* A darker red for better contrast */
+}
+
+.toast-info {
+    background-color: var(--secondary);
+}
+
 /* --- Footer --- */
 footer {
     text-align: center;
@@ -489,26 +835,117 @@ footer {
 }
 
 /* --- Responsive Design --- */
-@media (max-width: 768px) {
+
+/* Specific layout for Geographic tab */
+@media (min-width: 1024px) {
+    #geographic-section .chart-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 1023px) {
+    #geographic-section .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Large Desktops */
+@media (min-width: 1200px) {
+    .chart-grid {
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    }
+    h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Tablets (Landscape) & Small Desktops */
+@media (max-width: 1199px) and (min-width: 992px) {
+    .chart-grid {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Tablets (Portrait) */
+@media (max-width: 991px) and (min-width: 768px) {
+    .chart-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group {
+        width: 100%;
+    }
+    .action-buttons {
+        flex-direction: column;
+    }
+    .chart-container {
+        height: 450px;
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 767px) {
+    body {
+        padding: 10px;
+    }
+    header, .controls, .summary-section, .chart-container, footer {
+        padding: 15px;
+    }
+    h1 {
+        font-size: 1.3rem;
+    }
+    .subtitle {
+        font-size: 1rem;
+    }
+    .tabs {
+        justify-content: center;
+    }
+    .tab {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    .filter-section, .action-buttons {
+        flex-direction: column;
+    }
+    .filter-group {
+        width: 100%;
+        min-width: unset;
+    }
     .summary-stats {
         grid-template-columns: 1fr;
     }
-    
-    .chart-container {
-        padding: 15px;
-        height: 350px; /* Slightly smaller height for mobile */
-    }
-    
-    .filter-group {
-        min-width: 100%;
-    }
-    
     .chart-grid {
         grid-template-columns: 1fr;
         min-width: 100%;
     }
-    
+    .chart-container {
+        height: 400px; /* Adjusted height for mobile */
+        margin-bottom: 20px;
+    }
     .chart-title {
         font-size: 1rem; /* Smaller title on mobile */
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .chart-container {
+        height: 350px;
+    }
+    .chart-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+    .stat-card {
+        padding: 10px;
+    }
+    .stat-value {
+        font-size: 1.3rem;
     }
 }

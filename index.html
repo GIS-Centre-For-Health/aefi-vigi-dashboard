@@ -89,28 +89,46 @@
         </div>
         
         <div id="demographics-section" class="chart-section active">
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Sex Distribution</h3></div><canvas id="sexChart"></canvas></div>
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Age Distribution</h3></div><canvas id="ageGroupChart"></canvas></div>
+            <div class="chart-grid">
+                <div id="sexChartContainer" class="chart-container"></div>
+                <div id="ageDistributionChartContainer" class="chart-container"></div>
+                <div id="ageUnitDistributionChartContainer" class="chart-container"></div>
+            </div>
         </div>
         
         <div id="geographic-section" class="chart-section">
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Provinces Distribution</h3></div><canvas id="provincesChart"></canvas></div>
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Regional Distribution</h3></div><canvas id="regionChart"></canvas></div>
+            <div class="chart-grid">
+                <div id="patientProvinceChartContainer" class="chart-container"></div>
+                <div id="healthFacilityProvinceChartContainer" class="chart-container"></div>
+                <div id="districtDistributionChartContainer" class="chart-container"></div>
+            </div>
         </div>
         
         <div id="clinical-section" class="chart-section">
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Adverse Events</h3></div><canvas id="adverseEventsChart"></canvas></div>
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Serious Events</h3></div><canvas id="seriousnessChart"></canvas></div>
+            <div class="chart-grid">
+                <div id="adverseEventsChart" class="chart-container"></div>
+                <div id="seriousnessChart" class="chart-container"></div>
+                <div id="seriousReasonChart" class="chart-container"></div>
+            </div>
         </div>
         
         <div id="temporal-section" class="chart-section">
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Vaccination to Report Gap</h3></div><canvas id="timeToOnsetChart"></canvas></div>
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Reports Over Time</h3></div><canvas id="reportsTimeChart"></canvas></div>
+            <div class="chart-grid">
+                <div id="temporalAnalysisChartContainer" class="chart-container"></div>
+            </div>
         </div>
         
         <div id="vaccine-section" class="chart-section">
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">Cases by Vaccine</h3></div><canvas id="vaccineChart"></canvas></div>
-            <div class="chart-container"><div class="chart-header"><h3 class="chart-title">AEs by Vaccine</h3></div><canvas id="vaccineAdverseChart"></canvas></div>
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header"><h3 class="chart-title">Cases by Vaccine</h3></div>
+                    <div class="chart-content active"><canvas id="vaccineChart"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header"><h3 class="chart-title">AEs by Vaccine</h3></div>
+                    <div class="chart-content active"><canvas id="vaccineAdverseChart"></canvas></div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -127,9 +145,18 @@
     <!-- Local Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/compatibility.js"></script>
-    <script src="js/main.js"></script>
     <!-- Chart Modules -->
     <script src="js/charts/sex_chart.js"></script>
+    <script src="js/charts/age_distribution_chart.js"></script>
+    <script src="js/charts/patient_province_chart.js"></script>
+    <script src="js/charts/health_facility_province_chart.js"></script>
+    <script src="js/charts/district_distribution_chart.js"></script>
+    <script src="js/charts/age_unit_distribution_chart.js"></script>
+    <script src="js/charts/adverse_event_chart.js"></script>
+    <script src="js/charts/serious_event_chart.js"></script>
+    <script src="js/charts/serious_reason_chart.js"></script>
+    <script src="js/charts/temporal_analysis_chart.js"></script>
     <script src="js/charts/basic_charts.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

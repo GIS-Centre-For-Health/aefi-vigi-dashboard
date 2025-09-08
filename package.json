@@ -1,0 +1,22 @@
+{
+  "name": "aefi-dashboard",
+  "version": "1.5.0",
+  "description": "A zero-dependency, client-side data visualization tool for analyzing Adverse Events Following Immunization (AEFI) data.",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aefi",
+    "dashboard",
+    "visualization",
+    "chartjs",
+    "vanilla-js"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

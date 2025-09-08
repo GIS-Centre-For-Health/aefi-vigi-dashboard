@@ -1,36 +1,81 @@
 /**
  * Chart Module: Sex Distribution
  * 
- * This module handles the creation and updating of the sex distribution pie chart.
+ * Handles the creation of a comprehensive sex distribution component, 
+ * including a pie chart and a data table, with interactive tabs.
  */
 
 /**
- * Creates the configuration for the Sex Distribution chart.
- * @param {Array} data - The dataset from the AEFI dashboard.
- * @returns {object} A Chart.js configuration object.
+ * Renders the complete sex distribution chart component.
+ * @param {string} containerId - The ID of the container element.
+ * @param {Array} data - The dataset for visualization.
  */
-function createSexChartConfig(data) {
-    // Use utility function to aggregate by category
+function renderSexChart(containerId, data) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container with id ${containerId} not found.`);
+        return;
+    }
+
+    // Aggregate data
     const sexCounts = countField(data, 'Sex');
-    
-    // Ensure all categories exist with zero counts if missing for consistent colors
     const maleCount = sexCounts.Male || 0;
     const femaleCount = sexCounts.Female || 0;
     const unknownCount = sexCounts.Unknown || 0;
+    const total = maleCount + femaleCount + unknownCount;
 
-    return {
+    // Create component structure
+    container.innerHTML = `
+        <div class="chart-header">
+            <h3 class="chart-title">AEFI cases by Sex</h3>
+            <div class="chart-container-tabs">
+                <button class="chart-container-tab active" data-view="chart">Chart</button>
+                <button class="chart-container-tab" data-view="table">Table</button>
+            </div>
+        </div>
+        <div class="chart-content active">
+            <canvas id="sexChartCanvas"></canvas>
+        </div>
+        <div class="table-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Sex</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Male</td>
+                        <td>${maleCount}</td>
+                        <td>${((maleCount / total) * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Female</td>
+                        <td>${femaleCount}</td>
+                        <td>${((femaleCount / total) * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Unknown</td>
+                        <td>${unknownCount}</td>
+                        <td>${((unknownCount / total) * 100).toFixed(1)}%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    // Chart.js configuration
+    const chartConfig = {
         type: 'pie',
         data: {
             labels: ['Male', 'Female', 'Unknown'],
             datasets: [{
                 label: 'Sex Distribution',
                 data: [maleCount, femaleCount, unknownCount],
-                backgroundColor: [
-                    '#2C4A7C', // --primary-dark
-                    '#6B8CAE', // --primary-light
-                    '#95a5a6'  // --severity-unknown
-                ],
-                borderColor: '#FFFFFF', // --bg-secondary
+                backgroundColor: ['#2C4A7C', '#6B8CAE', '#95a5a6'],
+                borderColor: '#FFFFFF',
                 borderWidth: 2
             }]
         },
@@ -40,74 +85,41 @@ function createSexChartConfig(data) {
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: {
-                        // Generate custom labels to include counts
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            if (data.labels.length && data.datasets.length) {
-                                return data.labels.map((label, i) => {
-                                    const meta = chart.getDatasetMeta(0);
-                                    const ds = data.datasets[0];
-                                    const arc = meta.data[i];
-                                    const value = ds.data[i];
-                                    return {
-                                        text: `${label}: ${value}`,
-                                        fillStyle: ds.backgroundColor[i],
-                                        strokeStyle: ds.borderColor[i],
-                                        lineWidth: ds.borderWidth,
-                                        hidden: isNaN(ds.data[i]) || meta.data[i].hidden,
-                                        index: i
-                                    };
-                                });
-                            }
-                            return [];
-                        }
-                    }
                 },
                 title: {
-                    display: false, // Title is in the card header
-                    text: 'Sex Distribution'
+                    display: false
                 }
             }
         }
     };
-}
 
-/**
- * Creates or updates the Sex Distribution chart.
- * @param {Array} data - The dataset from the AEFI dashboard.
- */
-function updateSexChart(data) {
-    if (!Array.isArray(data)) {
-        console.log('No data provided for sex chart update.');
-        return;
-    }
-    
-    // Destroy existing chart if it exists
-    if (activeCharts && activeCharts['sexChart']) {
+    // Initialize chart
+    const ctx = document.getElementById('sexChartCanvas').getContext('2d');
+    if (activeCharts['sexChart']) {
         activeCharts['sexChart'].destroy();
-        delete activeCharts['sexChart'];
     }
-    
-    const config = createSexChartConfig(data);
-    
-    // Use the new architecture's createChart method
-    const ctx = document.getElementById('sexChart').getContext('2d');
-    if (typeof activeCharts !== 'undefined') {
-        activeCharts['sexChart'] = new Chart(ctx, config);
-    } else {
-        // Fallback for standalone usage
-        new Chart(ctx, config);
-    }
-    
-    console.log(`Sex chart updated with ${data.length} records`);
-}
+    activeCharts['sexChart'] = new Chart(ctx, chartConfig);
 
-/**
- * Initializes an empty sex chart on page load.
- */
-function initializeSexChart() {
-    const emptyData = [];
-    const config = createSexChartConfig(emptyData);
-    createChart('sexChart', config);
+    // Tab switching logic
+    const tabs = container.querySelectorAll('.chart-container-tab');
+    const chartContent = container.querySelector('.chart-content');
+    const tableContent = container.querySelector('.table-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update content visibility
+            const view = tab.getAttribute('data-view');
+            if (view === 'chart') {
+                chartContent.classList.add('active');
+                tableContent.classList.remove('active');
+            } else {
+                chartContent.classList.remove('active');
+                tableContent.classList.add('active');
+            }
+        });
+    });
 }

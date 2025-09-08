@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Read(/D:\\projects\\Vegg\\aefi\\js/**)",
-      "Read(/D:\\projects\\Vegg\\aefi\\css/**)"
+      "Read(/D:\projects\Vegg\aefi/**)"
     ],
     "deny": [],
     "ask": []
