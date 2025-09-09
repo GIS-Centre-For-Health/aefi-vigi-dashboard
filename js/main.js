@@ -4,6 +4,8 @@
 let rawData = [];
 let filteredData = [];
 let activeCharts = {};
+// Safely initialize the dictionary, checking if the function exists first.
+let vaccineDictionary = typeof getVaccineDictionary === 'function' ? getVaccineDictionary() : new Set();
 
 const chartRegistry = {
     demographics: [
@@ -150,6 +152,11 @@ function processData(data) {
     // Use the compatibility bridge to process data
     const processedData = processAEFIData(data);
     
+    // Train the vaccine dictionary
+    if (typeof trainVaccineDictionary === 'function') {
+        vaccineDictionary = trainVaccineDictionary(processedData, vaccineDictionary);
+    }
+
     filteredData = [...processedData];
     rawData = [...processedData];
     

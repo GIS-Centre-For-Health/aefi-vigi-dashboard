@@ -6,19 +6,14 @@
  */
 function renderVaccineDistributionChart(containerId, data) {
     try {
-        // 1. Data Processing
+        // 1. Data Processing using the new parser
         const vaccineCounts = {};
         data.forEach(row => {
             const vaccineField = row['Vaccine'];
-            if (vaccineField && typeof vaccineField === 'string') {
-                const vaccines = vaccineField.split(/[\n,]+/);
-                vaccines.forEach(vaccine => {
-                    const trimmedVaccine = vaccine.trim();
-                    if (trimmedVaccine) {
-                        vaccineCounts[trimmedVaccine] = (vaccineCounts[trimmedVaccine] || 0) + 1;
-                    }
-                });
-            }
+            const vaccines = parseVaccineField(vaccineField); // Use the new parser
+            vaccines.forEach(vaccine => {
+                vaccineCounts[vaccine] = (vaccineCounts[vaccine] || 0) + 1;
+            });
         });
 
         // 2. Chart Rendering
@@ -32,24 +27,25 @@ function renderVaccineDistributionChart(containerId, data) {
         const chartData = {
             labels: Object.keys(vaccineCounts),
             datasets: [{
-                label: 'Number of Doses',
+                label: 'Number of Cases',
                 data: Object.values(vaccineCounts),
-                backgroundColor: getChartColors(),
-                borderColor: getChartColors().map(color => color.replace('0.6', '1')),
+                backgroundColor: '#2C4A7C', // Single primary color
+                borderColor: '#2C4A7C',
                 borderWidth: 1
             }]
         };
 
         const chartOptions = {
+            indexAxis: 'y', // Flip the bar chart
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false, // Hide legend as it's not needed for a single series
                 },
                 title: {
                     display: true,
-                    text: 'Distribution of Vaccines Administered'
+                    text: 'AEFI cases by vaccine' // New title
                 }
             }
         };

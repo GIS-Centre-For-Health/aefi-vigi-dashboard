@@ -6,24 +6,21 @@
  */
 function renderVaccineAdverseEventsChart(containerId, data) {
     try {
-        // 1. Data Processing
+        // 1. Data Processing using the new parser
         const adverseEventsByVaccine = {};
         data.forEach(row => {
             const vaccineField = row['Vaccine'];
             const adverseEventField = row['Adverse event'];
 
             if (vaccineField && typeof vaccineField === 'string' && adverseEventField && typeof adverseEventField === 'string') {
-                const vaccines = vaccineField.split(/[\n,]+/);
+                const vaccines = parseVaccineField(vaccineField); // Use the new parser
                 const adverseEvents = adverseEventField.split(/[\n,]+/);
 
                 vaccines.forEach(vaccine => {
-                    const trimmedVaccine = vaccine.trim();
-                    if (trimmedVaccine) {
-                        if (!adverseEventsByVaccine[trimmedVaccine]) {
-                            adverseEventsByVaccine[trimmedVaccine] = 0;
-                        }
-                        adverseEventsByVaccine[trimmedVaccine] += adverseEvents.length;
+                    if (!adverseEventsByVaccine[vaccine]) {
+                        adverseEventsByVaccine[vaccine] = 0;
                     }
+                    adverseEventsByVaccine[vaccine] += adverseEvents.length;
                 });
             }
         });
@@ -41,18 +38,19 @@ function renderVaccineAdverseEventsChart(containerId, data) {
             datasets: [{
                 label: 'Number of Adverse Events',
                 data: Object.values(adverseEventsByVaccine),
-                backgroundColor: getChartColors(),
-                borderColor: getChartColors().map(color => color.replace('0.6', '1')),
+                backgroundColor: '#2C4A7C', // Single primary color
+                borderColor: '#2C4A7C',
                 borderWidth: 1
             }]
         };
 
         const chartOptions = {
+            indexAxis: 'y', // Flip the bar chart
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false,
                 },
                 title: {
                     display: true,
