@@ -56,7 +56,7 @@ function renderSeriousReasonChart(containerId, reasonCounts) {
             datasets: [{
                 label: 'Number of Cases',
                 data: chartData.map(item => item[1]),
-                backgroundColor: getChartColors(chartData.length),
+                backgroundColor: '#2C4A7C',
                 borderColor: '#ffffff',
                 borderWidth: 1
             }]
@@ -88,5 +88,5 @@ function renderSeriousReasonChart(containerId, reasonCounts) {
         }
     };
 
-    createChart(containerId, 'Distribution of Reasons for Serious Events', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
+    createChart(containerId, 'AEFI Serious Events Outcome', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
 }

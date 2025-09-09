@@ -1,7 +1,7 @@
 function renderSeriousEventChart(containerId, seriousCounts) {
     const colorMap = {
-        'Serious': '#4A2C47',
-        'Not Serious': '#B08FA3',
+        'Serious': '#2C4A7C',
+        'Not Serious': '#6B8CAE',
         'Unknown': '#E5E5E5'
     };
 

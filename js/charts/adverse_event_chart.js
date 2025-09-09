@@ -58,7 +58,7 @@ function renderAdverseEventChart(containerId, events) {
             datasets: [{
                 label: 'Adverse Events',
                 data: topEvents.map(e => e[1]),
-                backgroundColor: getChartColors()[0]
+                backgroundColor: '#2C4A7C'
             }]
         },
         options: {
