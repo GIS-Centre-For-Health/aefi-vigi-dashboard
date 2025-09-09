@@ -7,23 +7,42 @@
  * @param {number} [count] - The number of colors to return.
  * @returns {string|string[]} A single color or an array of colors.
  */
-function getChartColors(count) {
-    // Colors aligned with the new CSS variables from Init.md
-    const colors = [
-        '#2C4A7C', // --primary-dark
-        '#6B8CAE', // --primary-light
-        '#B08FA3', // --severity-mild (Purple)
-        '#4A90E2', // --accent
-        '#A8C0D8', // --primary-lighter
-        '#4A2C47', // --severity-serious (Dark Purple)
-        '#E5E5E5', // --severity-unknown (Gray)
-        '#3D2841', // --severity-fatal
-    ];
+// function getChartColors(count) {
+//     // Colors aligned with the new CSS variables from Init.md
+//     const colors = [
+//         '#2C4A7C', // --primary-dark
+//         '#6B8CAE', // --primary-light
+//         '#B08FA3', // --severity-mild (Purple)
+//         '#4A90E2', // --accent
+//         '#A8C0D8', // --primary-lighter
+//         '#4A2C47', // --severity-serious (Dark Purple)
+//         '#E5E5E5', // --severity-unknown (Gray)
+//         '#3D2841', // --severity-fatal
+//     ];
 
-    if (count) {
-        return colors.slice(0, count);
-    }
-    return colors;
+//     if (count) {
+//         return colors.slice(0, count);
+//     }
+//     return colors;
+// }                                                                                                                                                                                         
+
+/**
+ * Generates an array of consistent chart colors.
+ *
+ * @returns {Array<string>} - An array of RGBA color strings.
+ */
+function getChartColors() {
+    return [
+        'rgba(44, 62, 80, 0.6)',
+        'rgba(60, 77, 94, 0.6)',
+        'rgba(75, 91, 106, 0.6)',
+        'rgba(89, 104, 117, 0.6)',
+        'rgba(102, 116, 128, 0.6)',
+        'rgba(114, 127, 138, 0.6)',
+        'rgba(125, 137, 147, 0.6)',
+        'rgba(135, 146, 155, 0.6)',
+        'rgba(144, 154, 163, 0.6)'
+    ];
 }
 
 function getUniqueValues(data, field) {
@@ -131,24 +150,7 @@ function clearSelectOptions(selectElement, keepDefault = false) {
     }
 }
 
-/**
- * Generates an array of consistent chart colors.
- *
- * @returns {Array<string>} - An array of RGBA color strings.
- */
-function getChartColors() {
-    return [
-        'rgba(44, 62, 80, 0.6)',
-        'rgba(60, 77, 94, 0.6)',
-        'rgba(75, 91, 106, 0.6)',
-        'rgba(89, 104, 117, 0.6)',
-        'rgba(102, 116, 128, 0.6)',
-        'rgba(114, 127, 138, 0.6)',
-        'rgba(125, 137, 147, 0.6)',
-        'rgba(135, 146, 155, 0.6)',
-        'rgba(144, 154, 163, 0.6)'
-    ];
-}
+
 
 /**
  * Displays a loading overlay with a message.
@@ -267,14 +269,14 @@ function generateSummaryStats(data) {
 
     const reportingProvinces = getUniqueValues(data, 'Patient state or province').length;
     
-    const ages = data.map(r => r.NormalizedAge).filter(age => age !== null && age !== undefined);
-    let averageAgeFormatted = 'N/A';
-    if (ages.length > 0) {
-        const averageAge = ages.reduce((a, b) => a + b, 0) / ages.length;
-        const years = Math.floor(averageAge);
-        const months = Math.round((averageAge - years) * 12);
-        averageAgeFormatted = `${years} Years, ${months} Months`;
-    }
+    // const ages = data.map(r => r.NormalizedAge).filter(age => age !== null && age !== undefined);
+    // let averageAgeFormatted = 'N/A';
+    // if (ages.length > 0) {
+    //     const averageAge = ages.reduce((a, b) => a + b, 0) / ages.length;
+    //     const years = Math.floor(averageAge);
+    //     const months = Math.round((averageAge - years) * 12);
+    //     averageAgeFormatted = `${years} Years, ${months} Months`;
+    // }
 
     const stats = [
         { title: 'Total Reports', value: totalRecords.toLocaleString() },
@@ -283,7 +285,7 @@ function generateSummaryStats(data) {
         { title: 'Total Serious Events', value: totalSeriousEvents.toLocaleString() },
         { title: 'Unique Vaccines', value: uniqueVaccines.toLocaleString() },
         { title: 'Reporting Provinces', value: reportingProvinces.toLocaleString() },
-        { title: 'Average Age', value: averageAgeFormatted }
+        // { title: 'Average Age', value: averageAgeFormatted }
     ];
 
     stats.forEach(stat => {
