@@ -1,29 +1,51 @@
-/**
- * Chart Module: Reason for Serious Event Distribution
- * 
- * This module handles the creation of the distribution chart for reasons of serious events.
- */
-
-/**
- * Renders the complete chart component for the reasons for serious events.
- * @param {string} containerId - The ID of the container element.
- * @param {object} reasonCounts - An object with counts for each serious reason category.
- */
 function renderSeriousReasonChart(containerId, reasonCounts) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container with id ${containerId} not found.`);
-        return;
-    }
-
     const chartData = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]);
+    const total = chartData.reduce((sum, [, count]) => sum + count, 0);
 
-    container.innerHTML = `
+    let tableRows = '';
+    chartData.forEach(([reason, count]) => {
+        const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+        tableRows += `
+            <tr>
+                <td>${reason}</td>
+                <td>${count}</td>
+                <td>${percentage}%</td>
+            </tr>
+        `;
+    });
+
+    tableRows += `
+        <tr class="total-row">
+            <td>Total</td>
+            <td>${total}</td>
+            <td>100.0%</td>
+        </tr>
+    `;
+
+    const containerHTML = `
         <div class="chart-header">
             <h3 class="chart-title">Distribution of Reasons for Serious Events</h3>
+            <div class="chart-container-tabs">
+                <button class="chart-container-tab active" data-view="chart">Chart</button>
+                <button class="chart-container-tab" data-view="table">Table</button>
+            </div>
         </div>
         <div class="chart-content active">
-            <canvas id="seriousReasonChartCanvas"></canvas>
+            <canvas></canvas>
+        </div>
+        <div class="table-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reason</th>
+                        <th>Count</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
         </div>
     `;
 
@@ -59,16 +81,12 @@ function renderSeriousReasonChart(containerId, reasonCounts) {
                 x: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1 // Ensure integer ticks for counts
+                        stepSize: 1
                     }
                 }
             }
         }
     };
 
-    const ctx = document.getElementById('seriousReasonChartCanvas').getContext('2d');
-    if (activeCharts['seriousReasonChart']) {
-        activeCharts['seriousReasonChart'].destroy();
-    }
-    activeCharts['seriousReasonChart'] = new Chart(ctx, chartConfig);
+    createChart(containerId, 'Distribution of Reasons for Serious Events', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
 }

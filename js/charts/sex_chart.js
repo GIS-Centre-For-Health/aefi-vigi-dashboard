@@ -1,31 +1,34 @@
-/**
- * Chart Module: Sex Distribution
- * 
- * Handles the creation of a comprehensive sex distribution component, 
- * including a pie chart and a data table, with interactive tabs.
- */
-
-/**
- * Renders the complete sex distribution chart component.
- * @param {string} containerId - The ID of the container element.
- * @param {Array} data - The dataset for visualization.
- */
 function renderSexChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container with id ${containerId} not found.`);
-        return;
-    }
-
-    // Aggregate data
     const sexCounts = countField(data, 'Sex');
     const maleCount = sexCounts.Male || 0;
     const femaleCount = sexCounts.Female || 0;
     const unknownCount = sexCounts.Unknown || 0;
     const total = maleCount + femaleCount + unknownCount;
 
-    // Create component structure
-    container.innerHTML = `
+    const tableRows = `
+        <tr>
+            <td>Male</td>
+            <td>${maleCount}</td>
+            <td>${((maleCount / total) * 100).toFixed(1)}%</td>
+        </tr>
+        <tr>
+            <td>Female</td>
+            <td>${femaleCount}</td>
+            <td>${((femaleCount / total) * 100).toFixed(1)}%</td>
+        </tr>
+        <tr>
+            <td>Unknown</td>
+            <td>${unknownCount}</td>
+            <td>${((unknownCount / total) * 100).toFixed(1)}%</td>
+        </tr>
+        <tr class="total-row">
+            <td>Total</td>
+            <td>${total}</td>
+            <td>100.0%</td>
+        </tr>
+    `;
+
+    const containerHTML = `
         <div class="chart-header">
             <h3 class="chart-title">AEFI cases by Sex</h3>
             <div class="chart-container-tabs">
@@ -34,7 +37,7 @@ function renderSexChart(containerId, data) {
             </div>
         </div>
         <div class="chart-content active">
-            <canvas id="sexChartCanvas"></canvas>
+            <canvas></canvas>
         </div>
         <div class="table-content">
             <table>
@@ -46,27 +49,12 @@ function renderSexChart(containerId, data) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Male</td>
-                        <td>${maleCount}</td>
-                        <td>${((maleCount / total) * 100).toFixed(1)}%</td>
-                    </tr>
-                    <tr>
-                        <td>Female</td>
-                        <td>${femaleCount}</td>
-                        <td>${((femaleCount / total) * 100).toFixed(1)}%</td>
-                    </tr>
-                    <tr>
-                        <td>Unknown</td>
-                        <td>${unknownCount}</td>
-                        <td>${((unknownCount / total) * 100).toFixed(1)}%</td>
-                    </tr>
+                    ${tableRows}
                 </tbody>
             </table>
         </div>
     `;
 
-    // Chart.js configuration
     const chartConfig = {
         type: 'pie',
         data: {
@@ -93,33 +81,5 @@ function renderSexChart(containerId, data) {
         }
     };
 
-    // Initialize chart
-    const ctx = document.getElementById('sexChartCanvas').getContext('2d');
-    if (activeCharts['sexChart']) {
-        activeCharts['sexChart'].destroy();
-    }
-    activeCharts['sexChart'] = new Chart(ctx, chartConfig);
-
-    // Tab switching logic
-    const tabs = container.querySelectorAll('.chart-container-tab');
-    const chartContent = container.querySelector('.chart-content');
-    const tableContent = container.querySelector('.table-content');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Update tabs
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            // Update content visibility
-            const view = tab.getAttribute('data-view');
-            if (view === 'chart') {
-                chartContent.classList.add('active');
-                tableContent.classList.remove('active');
-            } else {
-                chartContent.classList.remove('active');
-                tableContent.classList.add('active');
-            }
-        });
-    });
+    createChart(containerId, 'AEFI cases by Sex', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
 }

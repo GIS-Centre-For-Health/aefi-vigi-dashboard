@@ -1,34 +1,7 @@
-/**
- * Chart Module: Temporal Analysis
- * 
- * This module handles the creation of the temporal analysis chart, 
- * visualizing the time intervals between vaccination, onset, notification, and report dates.
- */
-
-/**
- * Renders the temporal analysis chart.
- * @param {string} containerId - The ID of the container element.
- * @param {Array} data - The dataset from the AEFI dashboard.
- */
 function renderTemporalAnalysisChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container with id ${containerId} not found.`);
-        return;
-    }
-
-    container.innerHTML = `
-        <div class="chart-header">
-            <h3 class="chart-title">Temporal Analysis of AEFI Reporting</h3>
-        </div>
-        <div class="chart-content active">
-            <canvas id="temporalAnalysisChart"></canvas>
-        </div>
-    `;
-
     const { vaccToOnset, onsetToNotification, notificationToReport } = processTemporalData(data);
 
-    const config = {
+    const chartConfig = {
         type: 'bar',
         data: {
             labels: ['0-7 Days', '8-30 Days', '31-90 Days', '91+ Days'],
@@ -89,7 +62,7 @@ function renderTemporalAnalysisChart(containerId, data) {
         }
     };
 
-    createChartEnhanced('temporalAnalysisChart', config.type, config.data, config.options);
+    createChart(containerId, 'Temporal Analysis of AEFI Reporting', chartConfig.type, chartConfig.data, chartConfig.options);
 }
 
 /**

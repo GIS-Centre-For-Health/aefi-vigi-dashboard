@@ -43,58 +43,165 @@ function clearSelectOptions(select, keepFirst) {
     }
 }
 
-function parseDate(value, fieldName, uniqueId) {
-    if (!value) return null;
-    if (value instanceof Date && !isNaN(value)) return new Date(value);
-
-    let dateString = String(value).trim();
-
-    // Reject ambiguous dates like YYYY or YYYYMM
-    if (/^\d{4}$/.test(dateString) || /^\d{6}$/.test(dateString)) {
-        console.warn(`Ambiguous date format "${dateString}" for field "${fieldName}" in record ${uniqueId}. Skipping.`);
+/**
+ * Parses a date string from various formats into a JavaScript Date object.
+ *
+ * @param {string|number} dateStr - The date string or Excel serial number.
+ * @param {string} fieldName - The name of the field being parsed.
+ * @param {string} recordId - The unique identifier for the record.
+ * @returns {Date|null} - The parsed Date object or null if parsing fails.
+ */
+function parseDate(dateStr, fieldName, recordId) {
+    if (dateStr === null || dateStr === undefined || dateStr === '') {
         return null;
     }
-    
-    // Handle numeric YYYYMMDD format (from number or string)
-    if (/^\d{8}$/.test(dateString)) {
-        const year = parseInt(dateString.substring(0, 4), 10);
-        const month = parseInt(dateString.substring(4, 6), 10) - 1;
-        const day = parseInt(dateString.substring(6, 8), 10);
-        const d = new Date(year, month, day);
-        if (d.getFullYear() === year && d.getMonth() === month && d.getDate() === day) {
-            return d;
-        }
-    }
-    
-    // Handle Excel date serial number
-    if (typeof value === 'number' && value > 1000 && value < 100000) {
-        try {
-            const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-            const d = new Date(excelEpoch.getTime() + (value * 86400000));
-            if (!isNaN(d.getTime())) return d;
-        } catch (e) { console.warn("Failed to parse Excel date:", value); }
-    }
-    
-    // Handle various string formats
-    if (typeof value === 'string') {
-        let d = new Date(dateString);
-        if (!isNaN(d.getTime())) return d;
 
-        const parts = dateString.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-        if (parts) {
-            const p1 = parseInt(parts[1], 10);
-            const p2 = parseInt(parts[2], 10);
-            const p3 = parseInt(parts[3], 10);
-            d = new Date(p3, p2 - 1, p1);
-            if (d.getFullYear() === p3 && d.getMonth() === p2 - 1 && d.getDate() === p1) return d;
-            d = new Date(p3, p1 - 1, p2);
-            if (d.getFullYear() === p3 && d.getMonth() === p1 - 1 && d.getDate() === p2) return d;
+    let date = null;
+
+    // Handle Excel serial numbers
+    if (typeof dateStr === 'number' && dateStr > 0) {
+        // Excel's epoch starts on 1900-01-01, but it incorrectly thinks 1900 is a leap year.
+        // JavaScript's epoch is 1970-01-01.
+        // The offset is 25569 days (from 1900-01-01 to 1970-01-01), minus 1 for the leap year bug.
+        const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+        date = new Date(excelEpoch.getTime() + dateStr * 86400000);
+    } else {
+        const str = String(dateStr).trim();
+
+        // Format: YYYY-MM-DD or YYYY/MM/DD
+        if (/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(str)) {
+            date = new Date(str);
+        }
+        // Format: DD-MM-YYYY or DD/MM/YYYY
+        else if (/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(str)) {
+            const parts = str.split(/[-\/]/);
+            date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        }
+        // Format: YYYYMMDD
+        else if (/^\d{8}$/.test(str)) {
+            date = new Date(str.substring(0, 4), str.substring(4, 6) - 1, str.substring(6, 8));
+        }
+        // Attempt to parse with the native Date constructor as a fallback
+        else {
+            date = new Date(str);
         }
     }
-    
-    console.warn(`Could not parse date "${value}" for field "${fieldName}" in record ${uniqueId}.`);
+
+    // Check for invalid date
+    if (date instanceof Date && !isNaN(date)) {
+        return date;
+    }
+
     return null;
 }
+
+/**
+ * Extracts unique, non-empty values from a specific field in the dataset.
+ *
+ * @param {Array<Object>} data - The dataset.
+ * @param {string} field - The field to extract unique values from.
+ * @returns {Array<string>} - An array of unique values.
+ */
+function getUniqueValues(data, field) {
+    const valueSet = new Set();
+    data.forEach(row => {
+        if (row[field] && typeof row[field] === 'string') {
+            const values = row[field].split(/[\,\n]+/);
+            values.forEach(value => {
+                const trimmedValue = value.trim();
+                if (trimmedValue) {
+                    valueSet.add(trimmedValue);
+                }
+            });
+        }
+    });
+    return Array.from(valueSet).sort();
+}
+
+/**
+ * Clears all options from a select element.
+ *
+ * @param {HTMLElement} selectElement - The select element to clear.
+ * @param {boolean} keepDefault - Whether to keep the first option (the default).
+ */
+function clearSelectOptions(selectElement, keepDefault = false) {
+    const start = keepDefault ? 1 : 0;
+    while (selectElement.options.length > start) {
+        selectElement.remove(start);
+    }
+}
+
+/**
+ * Generates an array of consistent chart colors.
+ *
+ * @returns {Array<string>} - An array of RGBA color strings.
+ */
+function getChartColors() {
+    return [
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(255, 206, 86, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(199, 199, 199, 0.6)',
+        'rgba(83, 102, 255, 0.6)',
+        'rgba(100, 255, 100, 0.6)'
+    ];
+}
+
+/**
+ * Displays a loading overlay with a message.
+ *
+ * @param {string} message - The message to display.
+ */
+function showLoading(message) {
+    document.getElementById('loading-message').textContent = message;
+    document.getElementById('loading').style.display = 'flex';
+}
+
+/**
+ * Hides the loading overlay.
+ */
+function hideLoading() {
+    document.getElementById('loading').style.display = 'none';
+}
+
+/**
+ * Shows a toast notification with a message.
+ *
+ * @param {string} message - The message to display.
+ * @param {string} type - The type of notification ('success', 'error', 'info').
+ */
+function showToast(message, type = 'info') {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.className = `status ${type}`;
+    status.style.display = 'block';
+    setTimeout(() => {
+        status.style.display = 'none';
+    }, 5000);
+}
+
+function showSuccess(message) {
+    showToast(message, 'success');
+}
+
+function showError(message) {
+    showToast(message, 'error');
+}
+
+function showDataErrors(errors) {
+    if (errors.length > 0) {
+        const errorMessage = `Found ${errors.length} ambiguous or invalid date entries. Check console for details.`;
+        showError(errorMessage);
+        console.warn('Data Quality Issues Detected:');
+        errors.forEach(error => {
+            console.log(`- Record ID: ${error.id}, Field: "${error.field}", Value: "${error.value}"`);
+        });
+    }
+}
+
 
 function countField(data, field) {
     const counts = {};
@@ -298,22 +405,42 @@ function exportAllChartsToPNG() {
     showSuccess('PNG export feature coming soon');
 }
 
-/**
- * Creates a Chart.js chart with enhanced features and error handling.
- * @param {string} canvasId - The ID of the canvas element.
- * @param {string} type - The chart type (e.g., 'bar', 'pie').
- * @param {object} data - The chart data object.
- * @param {object} options - The chart options object.
- */
-function createChartEnhanced(canvasId, type, data, options = {}) {
-    const ctx = document.getElementById(canvasId);
-    if (!ctx) {
-        console.error(`Canvas with id ${canvasId} not found.`);
+
+function createChart(containerId, title, type, data, options = {}, containerHTML = null) {
+    const container = document.getElementById(containerId);
+    if (!container) {
         return;
     }
 
-    if (activeCharts[canvasId]) {
-        activeCharts[canvasId].destroy();
+    // Clear previous content
+    container.innerHTML = '';
+
+    if (containerHTML) {
+        container.innerHTML = containerHTML;
+    } else {
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'chart-header';
+        header.innerHTML = `<h3 class="chart-title">${title}</h3>`;
+        container.appendChild(header);
+
+        // Create content div
+        const content = document.createElement('div');
+        content.className = 'chart-content active';
+        container.appendChild(content);
+
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        content.appendChild(canvas);
+    }
+
+    const canvas = container.querySelector('canvas');
+    if (!canvas) {
+        return;
+    }
+
+    if (activeCharts[containerId]) {
+        activeCharts[containerId].destroy();
     }
 
     const defaultOptions = {
@@ -331,9 +458,103 @@ function createChartEnhanced(canvasId, type, data, options = {}) {
         },
     };
 
-    activeCharts[canvasId] = new Chart(ctx, {
+    activeCharts[containerId] = new Chart(canvas, {
         type: type,
         data: data,
         options: { ...defaultOptions, ...options },
     });
+
+    // Tab switching logic for both chart/table views
+    const tabs = container.querySelectorAll('.chart-container-tab, .toggle-btn');
+    if (tabs.length > 0) {
+        const chartContent = container.querySelector('.chart-content');
+        const tableContent = container.querySelector('.table-content');
+
+        if (chartContent && tableContent) {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const view = tab.getAttribute('data-view');
+                    chartContent.classList.toggle('active', view === 'chart');
+                    tableContent.classList.toggle('active', view === 'table');
+                });
+            });
+        }
+    }
+}
+
+function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders) {
+    const total = tableData.reduce((sum, row) => sum + row[1], 0);
+
+    let tableRows = '';
+    tableData.forEach(row => {
+        const percentage = total > 0 ? ((row[1] / total) * 100).toFixed(2) : 0;
+        tableRows += `
+            <tr>
+                <td>${row[0]}</td>
+                <td>${row[1]}</td>
+                <td>${percentage}%</td>
+            </tr>
+        `;
+    });
+    tableRows += `
+        <tr class="total-row">
+            <td>Total</td>
+            <td>${total}</td>
+            <td>100.00%</td>
+        </tr>
+    `;
+
+    const containerHTML = `
+        <div class="chart-header">
+            <h3 class="chart-title">${title}</h3>
+            <div class="chart-container-tabs">
+                <button class="chart-container-tab active" data-view="chart">Chart</button>
+                <button class="chart-container-tab" data-view="table">Table</button>
+            </div>
+        </div>
+        <div class="chart-content active">
+            <canvas></canvas>
+        </div>
+        <div class="table-content">
+            <table>
+                <thead>
+                    <tr>
+                        ${tableHeaders.map(header => `<th>${header}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const container = document.getElementById(containerId);
+    container.innerHTML = containerHTML;
+
+    const canvas = container.querySelector('canvas');
+    const chart = new Chart(canvas, {
+        type: 'bar',
+        data: chartData,
+        options: chartOptions
+    });
+
+    const tabs = container.querySelectorAll('.chart-container-tab');
+    const chartContent = container.querySelector('.chart-content');
+    const tableContent = container.querySelector('.table-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const view = tab.dataset.view;
+            chartContent.classList.toggle('active', view === 'chart');
+            tableContent.classList.toggle('active', view === 'table');
+        });
+    });
+
+    return chart;
 }

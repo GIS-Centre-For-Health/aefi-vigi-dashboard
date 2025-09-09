@@ -5,6 +5,31 @@ let rawData = [];
 let filteredData = [];
 let activeCharts = {};
 
+const chartRegistry = {
+    demographics: [
+        { func: generateSexDistribution, container: 'sexChartContainer' },
+        { func: generateAgeDistribution, container: 'ageDistributionChartContainer' },
+    ],
+    geographic: [
+        { func: generatePatientProvincesDistribution, container: 'patientProvinceChartContainer' },
+        { func: generateHealthFacilityProvincesDistribution, container: 'healthFacilityProvinceChartContainer' },
+        { func: generateDistrictDistribution, container: 'districtDistributionChartContainer' },
+        { func: generateReporterProvincesDistribution, container: 'reporterProvinceChartContainer' },
+    ],
+    clinical: [
+        { func: generateAdverseEventsDistribution, container: 'adverseEventsChart' },
+        { func: generateSeriousEventDistribution, container: 'seriousnessChart' },
+        { func: generateSeriousReasonDistribution, container: 'seriousReasonChart' },
+    ],
+    temporal: [
+        { func: generateTemporalAnalysis, container: 'temporalAnalysisChartContainer' },
+    ],
+    vaccine: [
+        { func: generateVaccineDistributionChart, container: 'vaccineDistributionChartContainer' },
+        { func: generateVaccineAdverseEventsChart, container: 'vaccineAdverseEventsChartContainer' },
+    ],
+};
+
 // Set up event listeners when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('upload').addEventListener('change', handleFileUpload);
@@ -69,7 +94,6 @@ function handleFileUpload(event) {
             
             processData(rawData);
         } catch (error) {
-            console.error("Error processing file:", error);
             showError(`Error processing file: ${error.message}`);
             hideLoading();
         }
@@ -198,6 +222,7 @@ function populateFilterOptions(data) {
 ///////////////////////////////////////////////////////////
 // UI Interaction Functions
 ///////////////////////////////////////////////////////////
+
 function switchTab(targetSection) {
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.toggle('active', tab.getAttribute('data-section') === targetSection);
@@ -205,6 +230,13 @@ function switchTab(targetSection) {
     document.querySelectorAll('.chart-section').forEach(section => {
         section.classList.toggle('active', section.id === `${targetSection}-section`);
     });
+
+    // Generate charts for the active tab
+    if (chartRegistry[targetSection]) {
+        chartRegistry[targetSection].forEach(chart => {
+            chart.func(filteredData);
+        });
+    }
 }
 
 function toggleExportOptions(event) {
@@ -294,31 +326,20 @@ function exportData(type) {
 ///////////////////////////////////////////////////////////
 // Chart Generation Functions
 ///////////////////////////////////////////////////////////
+
 function generateAllCharts(data) {
     Object.values(activeCharts).forEach(chart => chart.destroy());
     activeCharts = {};
-    
-    // Demographics
-    generateSexDistribution(data);
-    generateAgeDistribution(data);
-    generateAgeUnitDistribution(data);
-    
-    // Geographic
-    generatePatientProvincesDistribution(data);
-    generateHealthFacilityProvincesDistribution(data);
-    generateDistrictDistribution(data);
-    
-    // Clinical
-    generateAdverseEventsDistribution(data);
-    generateSeriousEventDistribution(data);
-    generateSeriousReasonDistribution(data);
-    
-    // Temporal
-    generateTemporalAnalysis(data);
-    
-    // Vaccine
-    generateVaccineDistribution(data);
-    generateVaccineAdverseEvents(data);
+
+    for (const tab in chartRegistry) {
+        chartRegistry[tab].forEach(chart => {
+            if (typeof chart.func === 'function') {
+                chart.func(data);
+            } else {
+                console.error(`Chart function for container #${chart.container} is not defined.`);
+            }
+        });
+    }
 }
 
 // Specific Chart Functions
@@ -330,20 +351,20 @@ function generateAgeDistribution(data) {
     renderAgeDistributionChart('ageDistributionChartContainer', data);
 }
 
-function generateAgeUnitDistribution(data) {
-    renderAgeUnitDistributionChart('ageUnitDistributionChartContainer', data);
-}
-
 function generatePatientProvincesDistribution(data) {
     renderPatientProvinceDistribution('patientProvinceChartContainer', data);
 }
 
 function generateHealthFacilityProvincesDistribution(data) {
-    renderHealthFacilityProvinceDistribution('healthFacilityProvinceChartContainer', data);
+    createHealthFacilityProvinceChart(data);
 }
 
 function generateDistrictDistribution(data) {
-    renderDistrictDistribution('districtDistributionChartContainer', data);
+    createDistrictDistributionChart(data);
+}
+
+function generateReporterProvincesDistribution(data) {
+    renderReporterProvinceDistribution('reporterProvinceChartContainer', data);
 }
 
 function generateAdverseEventsDistribution(data) {
@@ -442,24 +463,10 @@ function generateTemporalAnalysis(data) {
     renderTemporalAnalysisChart('temporalAnalysisChartContainer', data);
 }
 
-function generateVaccineDistribution(data) {
-    const vaccines = countField(data, 'Vaccine');
-    const top15Vaccines = Object.entries(vaccines).sort((a, b) => b[1] - a[1]).slice(0, 15);
-    createChartEnhanced('vaccineChart', 'bar', {
-        labels: top15Vaccines.map(v => v[0]),
-        datasets: [{ label: 'Top 15 Vaccines', data: top15Vaccines.map(v => v[1]), backgroundColor: '#2980b9' }]
-    }, {
-        interaction: {
-            mode: 'index',
-            intersect: false,
-        }
-    });
+function generateVaccineDistributionChart(data) {
+    renderVaccineDistributionChart('vaccineDistributionChartContainer', data);
 }
 
-function generateVaccineAdverseEvents(data) {
-    // This is a complex chart. For now, we'll show a placeholder.
-    createChartEnhanced('vaccineAdverseChart', 'bar', {
-        labels: ['Placeholder'],
-        datasets: [{ label: 'AEs by Vaccine (Coming Soon)', data: [100], backgroundColor: '#8e44ad' }]
-    });
+function generateVaccineAdverseEventsChart(data) {
+    renderVaccineAdverseEventsChart('vaccineAdverseEventsChartContainer', data);
 }

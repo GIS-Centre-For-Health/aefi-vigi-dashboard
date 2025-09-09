@@ -1,32 +1,30 @@
-function renderAdverseEventChart(containerId, events) {
-    const totalAllEvents = Object.values(events).reduce((sum, count) => sum + count, 0);
-    const topEvents = Object.entries(events).sort((a, b) => b[1] - a[1]).slice(0, 20);
-    const totalTopEvents = topEvents.reduce((sum, [, count]) => sum + count, 0);
+function renderReporterProvinceDistribution(containerId, data) {
+    const provinces = countField(data, 'Reporter state or province');
+    const sortedProvinces = Object.entries(provinces).sort((a, b) => b[1] - a[1]);
+    const total = sortedProvinces.reduce((sum, p) => sum + p[1], 0);
 
     let tableRows = '';
-    topEvents.forEach(([event, count]) => {
-        const percentage = totalAllEvents > 0 ? ((count / totalAllEvents) * 100).toFixed(1) : 0;
+    sortedProvinces.forEach(([province, count]) => {
+        const percentage = total > 0 ? ((count / total) * 100).toFixed(2) : 0;
         tableRows += `
             <tr>
-                <td>${event}</td>
+                <td>${province}</td>
                 <td>${count}</td>
                 <td>${percentage}%</td>
             </tr>
         `;
     });
-
-    const totalPercentage = totalAllEvents > 0 ? ((totalTopEvents / totalAllEvents) * 100).toFixed(1) : 0;
     tableRows += `
         <tr class="total-row">
-            <td>Total (Top 20)</td>
-            <td>${totalTopEvents}</td>
-            <td>${totalPercentage}%</td>
+            <td>Total</td>
+            <td>${total}</td>
+            <td>100.00%</td>
         </tr>
     `;
 
     const containerHTML = `
         <div class="chart-header">
-            <h3 class="chart-title">AEFI Adverse Events</h3>
+            <h3 class="chart-title">Reporter State or Province</h3>
             <div class="chart-container-tabs">
                 <button class="chart-container-tab active" data-view="chart">Chart</button>
                 <button class="chart-container-tab" data-view="table">Table</button>
@@ -39,8 +37,8 @@ function renderAdverseEventChart(containerId, events) {
             <table>
                 <thead>
                     <tr>
-                        <th>Adverse Event</th>
-                        <th>Count</th>
+                        <th>Province</th>
+                        <th>Number of Cases</th>
                         <th>Percentage</th>
                     </tr>
                 </thead>
@@ -54,28 +52,24 @@ function renderAdverseEventChart(containerId, events) {
     const chartConfig = {
         type: 'bar',
         data: {
-            labels: topEvents.map(e => e[0]),
+            labels: sortedProvinces.map(p => p[0]),
             datasets: [{
-                label: 'Adverse Events',
-                data: topEvents.map(e => e[1]),
-                backgroundColor: getChartColors()[0]
+                label: 'Cases by Reporter Province',
+                data: sortedProvinces.map(p => p[1]),
+                backgroundColor: '#2C4A7C',
             }]
         },
         options: {
-            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
                 intersect: false,
             },
-            scales: {
-                x: {
-                    beginAtZero: true
-                }
-            },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: false
+                },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
@@ -83,9 +77,22 @@ function renderAdverseEventChart(containerId, events) {
                         }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
             }
         }
     };
 
-    createChart(containerId, 'AEFI Adverse Events', 'bar', chartConfig.data, chartConfig.options, containerHTML);
+    createChart(containerId, 'Reporter State or Province', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
 }

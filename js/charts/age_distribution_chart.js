@@ -1,22 +1,4 @@
-/**
- * Chart Module: Age Distribution
- * 
- * This module handles the creation of the age distribution component,
- * including a bar chart and a data table, with interactive tabs.
- */
-
-/**
- * Renders the complete age distribution chart component.
- * @param {string} containerId - The ID of the container element.
- * @param {Array} data - The dataset for visualization.
- */
 function renderAgeDistributionChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container with id ${containerId} not found.`);
-        return;
-    }
-
     const ageGroups= { '0-27 Days':0, '28 days to  23 months':0, '2 - 11 Years':0, '12-17 Years':0, '18-44 Years':0,  '45-64 Years':0, '65+ Years':0, 'Unknown':0};
 
     data.forEach(row => {
@@ -53,7 +35,15 @@ function renderAgeDistributionChart(containerId, data) {
         `;
     }
 
-    container.innerHTML = `
+    tableRows += `
+        <tr class="total-row">
+            <td>Total</td>
+            <td>${total}</td>
+            <td>100.0%</td>
+        </tr>
+    `;
+
+    const containerHTML = `
         <div class="chart-header">
             <h3 class="chart-title">AEFI cases by Age</h3>
             <div class="chart-container-tabs">
@@ -62,7 +52,7 @@ function renderAgeDistributionChart(containerId, data) {
             </div>
         </div>
         <div class="chart-content active">
-            <canvas id="ageGroupChartCanvas"></canvas>
+            <canvas></canvas>
         </div>
         <div class="table-content">
             <table>
@@ -79,6 +69,7 @@ function renderAgeDistributionChart(containerId, data) {
             </table>
         </div>
     `;
+
     const ageGroupPercentages = Object.values(ageGroups).map(count => total > 0 ? (count / total) * 100 : 0);
     const chartConfig = {
         type: 'bar',
@@ -128,24 +119,5 @@ function renderAgeDistributionChart(containerId, data) {
         }
     };
 
-    const ctx = document.getElementById('ageGroupChartCanvas').getContext('2d');
-    if (activeCharts['ageGroupChart']) {
-        activeCharts['ageGroupChart'].destroy();
-    }
-    activeCharts['ageGroupChart'] = new Chart(ctx, chartConfig);
-
-    // Tab switching logic
-    const tabs = container.querySelectorAll('.chart-container-tab');
-    const chartContent = container.querySelector('.chart-content');
-    const tableContent = container.querySelector('.table-content');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            const view = tab.getAttribute('data-view');
-            chartContent.classList.toggle('active', view === 'chart');
-            tableContent.classList.toggle('active', view === 'table');
-        });
-    });
+    createChart(containerId, 'AEFI cases by Age', 'bar', chartConfig.data, chartConfig.options, containerHTML);
 }
