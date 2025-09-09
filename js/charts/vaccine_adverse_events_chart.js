@@ -71,5 +71,6 @@ function renderVaccineAdverseEventsChart(containerId, data) {
         });
 
     } catch (error) {
+        console.error(`Failed to render chart in ${containerId}:`, error);
     }
 }

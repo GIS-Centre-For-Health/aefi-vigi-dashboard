@@ -9,17 +9,17 @@ function renderTemporalAnalysisChart(containerId, data) {
                 {
                     label: 'Vaccination to Onset',
                     data: vaccToOnset,
-                    backgroundColor: 'rgba(44, 74, 124, 0.8)',
+                    backgroundColor: 'rgba(44, 73, 124, 0.92)',
                 },
                 {
                     label: 'Onset to Notification',
                     data: onsetToNotification,
-                    backgroundColor: 'rgba(44, 74, 124, 0.6)',
+                    backgroundColor: 'rgba(44, 74, 124, 0.62)',
                 },
                 {
                     label: 'Notification to Report',
                     data: notificationToReport,
-                    backgroundColor: 'rgba(44, 74, 124, 0.4)',
+                    backgroundColor: 'rgba(44, 74, 124, 0.48)',
                 }
             ]
         },

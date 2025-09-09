@@ -5,28 +5,11 @@ function renderSexChart(containerId, data) {
     const unknownCount = sexCounts.Unknown || 0;
     const total = maleCount + femaleCount + unknownCount;
 
-    const tableRows = `
-        <tr>
-            <td>Male</td>
-            <td>${maleCount}</td>
-            <td>${((maleCount / total) * 100).toFixed(1)}%</td>
-        </tr>
-        <tr>
-            <td>Female</td>
-            <td>${femaleCount}</td>
-            <td>${((femaleCount / total) * 100).toFixed(1)}%</td>
-        </tr>
-        <tr>
-            <td>Unknown</td>
-            <td>${unknownCount}</td>
-            <td>${((unknownCount / total) * 100).toFixed(1)}%</td>
-        </tr>
-        <tr class="total-row">
-            <td>Total</td>
-            <td>${total}</td>
-            <td>100.0%</td>
-        </tr>
-    `;
+    const tableData = [
+        { sex: 'Male', count: maleCount, percentage: total > 0 ? ((maleCount / total) * 100).toFixed(1) : 0 },
+        { sex: 'Female', count: femaleCount, percentage: total > 0 ? ((femaleCount / total) * 100).toFixed(1) : 0 },
+        { sex: 'Unknown', count: unknownCount, percentage: total > 0 ? ((unknownCount / total) * 100).toFixed(1) : 0 }
+    ];
 
     const containerHTML = `
         <div class="chart-header">
@@ -49,15 +32,59 @@ function renderSexChart(containerId, data) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${tableRows}
                 </tbody>
             </table>
         </div>
     `;
 
-    const chartConfig = {
-        type: 'pie',
-        data: {
+    // Create the chart structure first
+    createChart(containerId, 'AEFI cases by Sex', 'pie', {}, {}, containerHTML);
+
+    // **XSS Fix: Safely create and append table rows**
+    const tableBody = document.querySelector(`#${containerId} tbody`);
+    if (tableBody) {
+        tableBody.innerHTML = ''; // Clear existing content
+
+        tableData.forEach(item => {
+            const row = document.createElement('tr');
+
+            const sexCell = document.createElement('td');
+            sexCell.textContent = item.sex;
+            row.appendChild(sexCell);
+
+            const countCell = document.createElement('td');
+            countCell.textContent = item.count;
+            row.appendChild(countCell);
+
+            const percentageCell = document.createElement('td');
+            percentageCell.textContent = `${item.percentage}%`;
+            row.appendChild(percentageCell);
+
+            tableBody.appendChild(row);
+        });
+
+        const totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+
+        const totalLabelCell = document.createElement('td');
+        totalLabelCell.textContent = 'Total';
+        totalRow.appendChild(totalLabelCell);
+
+        const totalCountCell = document.createElement('td');
+        totalCountCell.textContent = total;
+        totalRow.appendChild(totalCountCell);
+
+        const totalPercentageCell = document.createElement('td');
+        totalPercentageCell.textContent = '100.0%';
+        totalRow.appendChild(totalPercentageCell);
+
+        tableBody.appendChild(totalRow);
+    }
+
+    // Now, update the chart with data
+    const chart = activeCharts[containerId];
+    if (chart) {
+        chart.data = {
             labels: ['Male', 'Female', 'Unknown'],
             datasets: [{
                 label: 'Sex Distribution',
@@ -66,8 +93,8 @@ function renderSexChart(containerId, data) {
                 borderColor: '#FFFFFF',
                 borderWidth: 2
             }]
-        },
-        options: {
+        };
+        chart.options = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
@@ -78,8 +105,7 @@ function renderSexChart(containerId, data) {
                     display: false
                 }
             }
-        }
-    };
-
-    createChart(containerId, 'AEFI cases by Sex', chartConfig.type, chartConfig.data, chartConfig.options, containerHTML);
+        };
+        chart.update();
+    }
 }

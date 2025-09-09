@@ -125,7 +125,7 @@ function getUniqueValues(data, field) {
     const valueSet = new Set();
     data.forEach(row => {
         if (row[field] && typeof row[field] === 'string') {
-            const values = row[field].split(/[\,\n]+/);
+            const values = row[field].split(/[,\n]+/);
             values.forEach(value => {
                 const trimmedValue = value.trim();
                 if (trimmedValue) {
@@ -490,25 +490,6 @@ function createChart(containerId, title, type, data, options = {}, containerHTML
 function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders) {
     const total = tableData.reduce((sum, row) => sum + row[1], 0);
 
-    let tableRows = '';
-    tableData.forEach(row => {
-        const percentage = total > 0 ? ((row[1] / total) * 100).toFixed(2) : 0;
-        tableRows += `
-            <tr>
-                <td>${row[0]}</td>
-                <td>${row[1]}</td>
-                <td>${percentage}%</td>
-            </tr>
-        `;
-    });
-    tableRows += `
-        <tr class="total-row">
-            <td>Total</td>
-            <td>${total}</td>
-            <td>100.00%</td>
-        </tr>
-    `;
-
     const containerHTML = `
         <div class="chart-header">
             <h3 class="chart-title">${title}</h3>
@@ -528,7 +509,6 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
                     </tr>
                 </thead>
                 <tbody>
-                    ${tableRows}
                 </tbody>
             </table>
         </div>
@@ -536,6 +516,47 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
 
     const container = document.getElementById(containerId);
     container.innerHTML = containerHTML;
+
+    // **XSS Fix: Safely create and append table rows**
+    const tableBody = container.querySelector('tbody');
+    if (tableBody) {
+        tableData.forEach(row => {
+            const tr = document.createElement('tr');
+            
+            const cell1 = document.createElement('td');
+            cell1.textContent = row[0];
+            tr.appendChild(cell1);
+
+            const cell2 = document.createElement('td');
+            cell2.textContent = row[1];
+            tr.appendChild(cell2);
+
+            const percentage = total > 0 ? ((row[1] / total) * 100).toFixed(2) : 0;
+            const cell3 = document.createElement('td');
+            cell3.textContent = `${percentage}%`;
+            tr.appendChild(cell3);
+
+            tableBody.appendChild(tr);
+        });
+
+        // Add total row
+        const totalRow = document.createElement('tr');
+        totalRow.className = 'total-row';
+        
+        const totalCell1 = document.createElement('td');
+        totalCell1.textContent = 'Total';
+        totalRow.appendChild(totalCell1);
+
+        const totalCell2 = document.createElement('td');
+        totalCell2.textContent = total;
+        totalRow.appendChild(totalCell2);
+
+        const totalCell3 = document.createElement('td');
+        totalCell3.textContent = '100.00%';
+        totalRow.appendChild(totalCell3);
+        
+        tableBody.appendChild(totalRow);
+    }
 
     const canvas = container.querySelector('canvas');
     const chart = new Chart(canvas, {
