@@ -16,22 +16,15 @@ function renderVaccineDistributionChart(containerId, data) {
             });
         });
 
-        // 2. Chart Rendering
-        const chartContainer = document.getElementById(containerId);
-        if (!chartContainer) {
-            return;
-        }
-        chartContainer.innerHTML = '<canvas></canvas>';
-        const ctx = chartContainer.querySelector('canvas').getContext('2d');
+        const sortedVaccines = Object.entries(vaccineCounts).sort((a, b) => b[1] - a[1]);
 
+        // 2. Prepare Chart.js Configuration
         const chartData = {
-            labels: Object.keys(vaccineCounts),
+            labels: sortedVaccines.map(v => v[0]),
             datasets: [{
                 label: 'Number of Cases',
-                data: Object.values(vaccineCounts),
+                data: sortedVaccines.map(v => v[1]),
                 backgroundColor: '#2C4A7C', // Single primary color
-                borderColor: '#2C4A7C',
-                borderWidth: 1
             }]
         };
 
@@ -41,23 +34,28 @@ function renderVaccineDistributionChart(containerId, data) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false, // Hide legend as it's not needed for a single series
+                    display: false,
                 },
                 title: {
                     display: true,
-                    text: 'AEFI cases by vaccine' // New title
+                    text: 'AEFI cases by vaccine'
                 }
             }
         };
 
-        if (activeCharts[containerId]) {
-            activeCharts[containerId].destroy();
-        }
-        activeCharts[containerId] = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: chartOptions
-        });
+        // 3. Prepare data for the utility function's table
+        const tableHeaders = ['Vaccine', 'Number of Cases', 'Percentage'];
+        const tableData = sortedVaccines;
+
+        // 4. Call the reusable utility function
+        createBarChart(
+            containerId,
+            'AEFI cases by vaccine',
+            chartData,
+            chartOptions,
+            tableData,
+            tableHeaders
+        );
 
     } catch (error) {
         console.error(`Failed to render chart in ${containerId}:`, error);

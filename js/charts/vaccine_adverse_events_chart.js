@@ -14,7 +14,7 @@ function renderVaccineAdverseEventsChart(containerId, data) {
 
             if (vaccineField && typeof vaccineField === 'string' && adverseEventField && typeof adverseEventField === 'string') {
                 const vaccines = parseVaccineField(vaccineField); // Use the new parser
-                const adverseEvents = adverseEventField.split(/[\n,]+/);
+const adverseEvents = adverseEventField.split(/[,]+/);
 
                 vaccines.forEach(vaccine => {
                     if (!adverseEventsByVaccine[vaccine]) {
@@ -25,22 +25,15 @@ function renderVaccineAdverseEventsChart(containerId, data) {
             }
         });
 
-        // 2. Chart Rendering
-        const chartContainer = document.getElementById(containerId);
-        if (!chartContainer) {
-            return;
-        }
-        chartContainer.innerHTML = '<canvas></canvas>';
-        const ctx = chartContainer.querySelector('canvas').getContext('2d');
+        const sortedEvents = Object.entries(adverseEventsByVaccine).sort((a, b) => b[1] - a[1]);
 
+        // 2. Prepare Chart.js Configuration
         const chartData = {
-            labels: Object.keys(adverseEventsByVaccine),
+            labels: sortedEvents.map(v => v[0]),
             datasets: [{
                 label: 'Number of Adverse Events',
-                data: Object.values(adverseEventsByVaccine),
+                data: sortedEvents.map(v => v[1]),
                 backgroundColor: '#2C4A7C', // Single primary color
-                borderColor: '#2C4A7C',
-                borderWidth: 1
             }]
         };
 
@@ -59,14 +52,19 @@ function renderVaccineAdverseEventsChart(containerId, data) {
             }
         };
 
-        if (activeCharts[containerId]) {
-            activeCharts[containerId].destroy();
-        }
-        activeCharts[containerId] = new Chart(ctx, {
-            type: 'bar',
-            data: chartData,
-            options: chartOptions
-        });
+        // 3. Prepare data for the utility function's table
+        const tableHeaders = ['Vaccine', 'Number of Adverse Events', 'Percentage'];
+        const tableData = sortedEvents;
+
+        // 4. Call the reusable utility function
+        createBarChart(
+            containerId,
+            'Adverse Events by Vaccine',
+            chartData,
+            chartOptions,
+            tableData,
+            tableHeaders
+        );
 
     } catch (error) {
         console.error(`Failed to render chart in ${containerId}:`, error);
