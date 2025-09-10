@@ -276,71 +276,86 @@ function toggleExportOptions(event) {
 }
 
 function applyFilters() {
-    showLoading('Applying filters...');
-    
-    const regionFilter = document.getElementById('region-filter').value;
-    const dateFromFilter = document.getElementById('date-from-filter').value;
-    const dateToFilter = document.getElementById('date-to-filter').value;
-    const vaccineFilter = document.getElementById('vaccine-filter').value;
-    const seriousnessFilter = document.getElementById('seriousness-filter').value;
-    
-    filteredData = [...rawData];
-    
-    if (regionFilter !== 'all') {
-        filteredData = filteredData.filter(row => row['Created by organisation level 3'] === regionFilter);
-    }
-    if (vaccineFilter !== 'all') {
-        // Use the parser to correctly check if the row contains the selected vaccine
-        filteredData = filteredData.filter(row => {
-            const vaccineField = row['Vaccine'];
-            if (vaccineField && typeof vaccineField === 'string') {
-                const vaccines = parseVaccineField(vaccineField);
-                return vaccines.includes(vaccineFilter);
-            }
-            return false;
-        });
-    }
-    if (seriousnessFilter === 'serious') {
-        filteredData = filteredData.filter(row => {
-            const seriousField = row['Serious'];
-            if (seriousField && typeof seriousField === 'string') {
-                return seriousField.split(/\r?\n/).some(val => val.trim().toLowerCase() === 'yes');
-            }
-            return false;
-        });
-    }
-    
-    const startDate = dateFromFilter ? new Date(dateFromFilter) : null;
-    const endDate = dateToFilter ? new Date(dateToFilter) : null;
+      showLoading('Applying filters...');
 
-    if (startDate || endDate) {
-        filteredData = filteredData.filter(row => {
-            const reportDate = parseDate(row['Date of report']);
-            if (!reportDate) return false;
+      const regionFilter = document.getElementById('region-filter').value;
+      const dateFromFilter = document.getElementById('date-from-filter').value;
+      const dateToFilter = document.getElementById('date-to-filter').value;
+      const vaccineFilter = document.getElementById('vaccine-filter').value;
+      const seriousnessFilter = document.getElementById('seriousness-filter').value;
 
-            if (startDate && reportDate < startDate) {
-                return false;
-            }
-            if (endDate && reportDate > endDate) {
-                return false;
-            }
-            return true;
-        });
+      let tempFilteredData = [...rawData];
+
+      if (regionFilter !== 'all') {
+          tempFilteredData = tempFilteredData.filter(row => row['Created by organisation level 3'] === regionFilter);
+      }
+      if (vaccineFilter !== 'all') {
+          tempFilteredData = tempFilteredData.filter(row => {
+              const vaccineField = row['Vaccine'];
+              if (vaccineField && typeof vaccineField === 'string') {
+                  const vaccines = parseVaccineField(vaccineField);
+                  return vaccines.includes(vaccineFilter);
+              }
+              return false;
+          });
+      }
+      if (seriousnessFilter === 'serious') {
+          tempFilteredData = tempFilteredData.filter(row => {
+              const seriousField = row['Serious'];
+              if (seriousField && typeof seriousField === 'string') {
+                  return seriousField.split(/\r?\n/).some(val => val.trim().toLowerCase() === 'yes');
+              }
+              return false;
+          });
+      }
+
+      const startDate = dateFromFilter ? new Date(dateFromFilter) : null;
+      const endDate = dateToFilter ? new Date(dateToFilter) : null;
+
+      // For the end date, set it to the end of the day to make the range inclusive.
+      if (endDate) {
+          endDate.setUTCHours(23, 59, 59, 999);
+      }
+       if (startDate) {
+        startDate.setUTCHours(0, 0, 0, 0);
     }
-    
-    generateAllCharts(filteredData);
-    generateSummaryStats(filteredData);
-    
+
+      if (startDate || endDate) {
+          tempFilteredData = tempFilteredData.filter(row => {
+              const reportDateStr = row['Date of report'];
+              if (!reportDateStr) {
+                // Keep rows with no report date if no date filter is applied
+                // Or decide on a specific logic, e.g., include them by default
+                return true; 
+            }
+              const reportDate = parseDate(reportDateStr);
+              if (!reportDate) return true;
+
+              if (startDate && reportDate < startDate) {
+                  return false;
+              }
+              if (endDate && reportDate > endDate) {
+                  return false;
+              }
+              return true;
+          });
+      }
+
+      filteredData = tempFilteredData;
+      generateAllCharts(filteredData);
+      generateSummaryStats(filteredData);
+
     showSuccess(`Applied filters: ${filteredData.length} records matching.`);
-    hideLoading();
-}
+      hideLoading();
+  }
 
 function resetFilters() {
-    // Reset filter inputs
+    showLoading('Resetting filters...');
+
     document.getElementById('region-filter').value = 'all';
     document.getElementById('vaccine-filter').value = 'all';
     document.getElementById('seriousness-filter').value = 'all';
-    
+
     if (minDate && maxDate) {
         document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
         document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
@@ -348,9 +363,14 @@ function resetFilters() {
         document.getElementById('date-from-filter').value = '';
         document.getElementById('date-to-filter').value = '';
     }
-    
-    // Re-apply filters to show all data
-    applyFilters();
+
+    filteredData = [...rawData];
+
+    generateAllCharts(filteredData);
+    generateSummaryStats(filteredData);
+
+    showSuccess('Filters reset.');
+    hideLoading();
 }
 
 

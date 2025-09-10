@@ -63,14 +63,12 @@ function clearSelectOptions(select, keepFirst) {
 }
 
 /**
- * Parses a date string from various formats into a JavaScript Date object.
+ * Parses a date string from various formats into a JavaScript Date object, ignoring timezones.
  *
  * @param {string|number} dateStr - The date string or Excel serial number.
- * @param {string} fieldName - The name of the field being parsed.
- * @param {string} recordId - The unique identifier for the record.
  * @returns {Date|null} - The parsed Date object or null if parsing fails.
  */
-function parseDate(dateStr, fieldName, recordId) {
+function parseDate(dateStr) {
     if (dateStr === null || dateStr === undefined || dateStr === '') {
         return null;
     }
@@ -79,35 +77,44 @@ function parseDate(dateStr, fieldName, recordId) {
 
     // Handle Excel serial numbers
     if (typeof dateStr === 'number' && dateStr > 0) {
-        // Excel's epoch starts on 1900-01-01, but it incorrectly thinks 1900 is a leap year.
-        // JavaScript's epoch is 1970-01-01.
-        // The offset is 25569 days (from 1900-01-01 to 1970-01-01), minus 1 for the leap year bug.
         const excelEpoch = new Date(Date.UTC(1899, 11, 30));
         date = new Date(excelEpoch.getTime() + dateStr * 86400000);
     } else {
         const str = String(dateStr).trim();
+        let year, month, day;
 
-        // Format: YYYY-MM-DD or YYYY/MM/DD
-        if (/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(str)) {
-            date = new Date(str);
-        }
-        // Format: DD-MM-YYYY or DD/MM/YYYY
-        else if (/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(str))
-         {
+        // YYYY-MM-DD or YYYY/MM/DD
+        if (/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.test(str)) {
             const parts = str.split(/[-\/]/);
-            date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            year = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            day = parseInt(parts[2], 10);
+            date = new Date(Date.UTC(year, month, day));
         }
-        // Format: YYYYMMDD
-        else if (/^\d{8}$/.test(str)) {
-            date = new Date(str.substring(0, 4), str.substring(4, 6) - 1, str.substring(6, 8));
+        // DD-MM-YYYY or DD/MM/YYYY
+        else if (/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/.test(str)) {
+            const parts = str.split(/[-\/]/);
+            day = parseInt(parts[0], 10);
+            month = parseInt(parts[1], 10) - 1;
+            year = parseInt(parts[2], 10);
+            date = new Date(Date.UTC(year, month, day));
         }
-        // Attempt to parse with the native Date constructor as a fallback
+        // YYYYMMDD
+        else if (/^(\d{8})$/.test(str)) {
+            year = parseInt(str.substring(0, 4), 10);
+            month = parseInt(str.substring(4, 6), 10) - 1;
+            day = parseInt(str.substring(6, 8), 10);
+            date = new Date(Date.UTC(year, month, day));
+        }
+        // Fallback for other ISO-like formats that JS can handle
         else {
-            date = new Date(str);
+            const tempDate = new Date(str);
+            if (tempDate instanceof Date && !isNaN(tempDate)) {
+                date = new Date(Date.UTC(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate()));
+            }
         }
     }
 
-    // Check for invalid date
     if (date instanceof Date && !isNaN(date)) {
         return date;
     }
@@ -126,7 +133,7 @@ function getUniqueValues(data, field) {
     const valueSet = new Set();
     data.forEach(row => {
         if (row[field] && typeof row[field] === 'string') {
-            const values = row[field].split(/[,\n]+/);
+            const values = row[field].split(/[\,\n]+/);
             values.forEach(value => {
                 const trimmedValue = value.trim();
                 if (trimmedValue) {
