@@ -270,6 +270,7 @@ function applyFilters() {
     const regionFilter = document.getElementById('region-filter').value;
     const dateRange = document.getElementById('date-range').value;
     const vaccineFilter = document.getElementById('vaccine-filter').value;
+    const seriousnessFilter = document.getElementById('seriousness-filter').value;
     
     filteredData = [...rawData];
     
@@ -277,7 +278,24 @@ function applyFilters() {
         filteredData = filteredData.filter(row => row['Created by organisation level 3'] === regionFilter);
     }
     if (vaccineFilter !== 'all') {
-        filteredData = filteredData.filter(row => row['Vaccine'] === vaccineFilter);
+        // Use the parser to correctly check if the row contains the selected vaccine
+        filteredData = filteredData.filter(row => {
+            const vaccineField = row['Vaccine'];
+            if (vaccineField && typeof vaccineField === 'string') {
+                const vaccines = parseVaccineField(vaccineField);
+                return vaccines.includes(vaccineFilter);
+            }
+            return false;
+        });
+    }
+    if (seriousnessFilter === 'serious') {
+        filteredData = filteredData.filter(row => {
+            const seriousField = row['Serious'];
+            if (seriousField && typeof seriousField === 'string') {
+                return seriousField.split(/\r?\n/).some(val => val.trim().toLowerCase() === 'yes');
+            }
+            return false;
+        });
     }
     if (dateRange !== 'all') {
         const now = new Date();
@@ -288,7 +306,10 @@ function applyFilters() {
             case 'last180': startDate = new Date(now.setDate(now.getDate() - 180)); break;
         }
         if (startDate) {
-            filteredData = filteredData.filter(row => row['Date of report'] && row['Date of report'] >= startDate);
+            filteredData = filteredData.filter(row => {
+                const reportDate = parseDate(row['Date of report']);
+                return reportDate && reportDate >= startDate;
+            });
         }
     }
     
@@ -304,6 +325,7 @@ function resetFilters() {
     document.getElementById('region-filter').value = 'all';
     document.getElementById('date-range').value = 'all';
     document.getElementById('vaccine-filter').value = 'all';
+    document.getElementById('seriousness-filter').value = 'all';
     
     // Clear data
     rawData = [];
