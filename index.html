@@ -32,12 +32,19 @@
     
     <div class="controls">
         <div class="upload-container">
-            <label for="upload" class="file-label">
-                <i class="fas fa-file-excel"></i>
-                <span id="file-label-text">Upload AEFI Excel File</span>
-            </label>
-            <input type="file" id="upload" class="file-input" accept=".xlsx, .xls">
-            <div id="file-info"></div>
+            <div id="file-input-section">
+                <label for="upload" class="file-label">
+                    <i class="fas fa-file-excel"></i>
+                    <span id="file-label-text">Upload AEFI Excel File</span>
+                </label>
+                <input type="file" id="upload" class="file-input" accept=".xlsx, .xls">
+            </div>
+            <div id="file-display-section" style="display: none;">
+                <div id="file-info"></div>
+                <button id="clear-data-button" class="btn-secondary">
+                    <i class="fas fa-trash-alt"></i> Clear Data & Upload New File
+                </button>
+            </div>
         </div>
         
         <div id="status" class="status"></div>

@@ -692,3 +692,27 @@ footer {
     height: 700px;
 }
 
+#file-display-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    background: #e9ecef;
+    border-radius: 8px;
+}
+
+#file-info {
+    font-weight: bold;
+    color: var(--primary);
+}
+
+#clear-data-button {
+    background-color: var(--primary-light);
+}
+
+#clear-data-button:hover {
+    background-color: var(--primary-dark);
+}

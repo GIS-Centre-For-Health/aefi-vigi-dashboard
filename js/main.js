@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('apply-filters').addEventListener('click', applyFilters);
     document.getElementById('reset-filters').addEventListener('click', resetFilters);
     document.getElementById('export-data').addEventListener('click', toggleExportOptions);
+    document.getElementById('clear-data-button').addEventListener('click', resetUI);
     
     // Tab switching
     document.querySelectorAll('.tab').forEach(tab => {
@@ -171,13 +172,10 @@ function processData(data) {
     document.getElementById('summary-section').style.display = 'block';
     document.getElementById('visualization-container').style.display = 'block';
     
-    // Disable upload button
-    const uploadInput = document.getElementById('upload');
-    const uploadLabel = document.querySelector('.file-label');
-    uploadInput.disabled = true;
-    uploadLabel.style.cursor = 'not-allowed';
-    uploadLabel.style.backgroundColor = '#e9ecef';
-    document.getElementById('file-label-text').textContent = 'File Loaded Successfully';
+    // Update UI to show file info and clear button
+    document.getElementById('file-input-section').style.display = 'none';
+    document.getElementById('file-display-section').style.display = 'block';
+
 
     showDataErrors(dataErrors);
     if (dataErrors.length === 0) {
@@ -185,6 +183,42 @@ function processData(data) {
     }
     hideLoading();
 }
+
+function resetUI() {
+    // Clear data arrays
+    rawData = [];
+    filteredData = [];
+
+    // Destroy all active charts
+    Object.values(activeCharts).forEach(chart => chart.destroy());
+    activeCharts = {};
+
+    // Clear all chart containers
+    document.querySelectorAll('.chart-container').forEach(container => {
+        container.innerHTML = '';
+    });
+
+    // Clear summary stats
+    document.getElementById('summary-stats').innerHTML = '';
+
+    // Hide the main content sections
+    document.getElementById('filter-section').style.display = 'none';
+    document.getElementById('summary-section').style.display = 'none';
+    document.getElementById('visualization-container').style.display = 'none';
+
+    // Reset file input
+    const uploadInput = document.getElementById('upload');
+    uploadInput.value = ''; // Clear the selected file
+
+    // Switch back to the file input view
+    document.getElementById('file-input-section').style.display = 'block';
+    document.getElementById('file-display-section').style.display = 'none';
+    document.getElementById('file-info').textContent = '';
+
+    // Reset status message
+    showSuccess('Cleared data. Ready to upload a new file.');
+}
+
 
 function preprocessDates(data) {
     const dateFields = [
