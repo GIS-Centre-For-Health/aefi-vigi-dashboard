@@ -1,6 +1,7 @@
 function renderAdverseEventChart(containerId, events) {
     // 1. Unique Data Processing for this chart
-    const topEvents = Object.entries(events).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    const topEvents = Object.entries(events).sort((a, b) => b[1] - a[1]);
+    const totalEvents = topEvents.reduce((sum, [, count]) => sum + count, 0);
 
     // 2. Prepare Chart.js Configuration
     const chartData = {
@@ -18,7 +19,7 @@ function renderAdverseEventChart(containerId, events) {
         maintainAspectRatio: false,
         interaction: {
             mode: 'index',
-            intersect: false,
+            intersect: true,
         },
         scales: {
             x: {
@@ -30,7 +31,9 @@ function renderAdverseEventChart(containerId, events) {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return `Cases: ${context.raw}`;
+                        const count = context.raw;
+                        const percentage = totalEvents > 0 ? ((count / totalEvents) * 100).toFixed(1) : 0;
+                        return `Cases: ${count} (${percentage}%)`;
                     }
                 }
             }
@@ -44,10 +47,11 @@ function renderAdverseEventChart(containerId, events) {
     // 4. Call the reusable utility function
     createBarChart(
         containerId,
-        'AEFI Adverse Events (Top 20)',
+        'AEFI Adverse Events',
         chartData,
         chartOptions,
         tableData,
-        tableHeaders
+        tableHeaders,
+        true
     );
 }

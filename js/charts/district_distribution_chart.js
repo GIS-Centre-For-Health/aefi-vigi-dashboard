@@ -33,6 +33,7 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
         chartData,
         chartOptions,
         sortedDistricts,
-        ['District', 'Number of Cases', 'Percentage']
+        ['District', 'Number of Cases', 'Percentage'],
+        true
     );
 }

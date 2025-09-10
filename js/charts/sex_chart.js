@@ -103,6 +103,18 @@ function renderSexChart(containerId, data) {
                 },
                 title: {
                     display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const count = context.raw || 0;
+                            const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                            
+                            return `${label}: ${count} cases (${percentage}% of total)`;
+                        }
+                    }
                 }
             }
         };

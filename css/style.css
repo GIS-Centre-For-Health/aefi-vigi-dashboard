@@ -358,6 +358,16 @@ button {
     flex-direction: column;
 }
 
+.chart-scroll-container {
+    overflow-y: auto;
+    height: 100%;
+    position: relative;
+}
+
+.chart-canvas-wrapper {
+    position: relative;
+}
+
 .chart-card {
     background-color: var(--bg-secondary);
     padding: 1.5rem;
@@ -676,3 +686,4 @@ footer {
 #geographic-section .chart-container {
     height: 700px;
 }
+

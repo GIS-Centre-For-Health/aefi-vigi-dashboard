@@ -1,27 +1,34 @@
 function renderTemporalAnalysisChart(containerId, data) {
     const { vaccToOnset, onsetToNotification, notificationToReport } = processTemporalData(data);
 
+    const datasets = [
+        {
+            label: 'Vaccination to Onset',
+            data: vaccToOnset,
+            backgroundColor: 'rgba(44, 73, 124, 0.92)',
+        },
+        {
+            label: 'Onset to Notification',
+            data: onsetToNotification,
+            backgroundColor: 'rgba(44, 74, 124, 0.62)',
+        },
+        {
+            label: 'Notification to Report',
+            data: notificationToReport,
+            backgroundColor: 'rgba(44, 74, 124, 0.48)',
+        }
+    ];
+
+    // Calculate total for each dataset to use in tooltip
+    datasets.forEach(ds => {
+        ds.total = ds.data.reduce((sum, count) => sum + count, 0);
+    });
+
     const chartConfig = {
         type: 'bar',
         data: {
             labels: ['0-7 Days', '8-30 Days', '31-90 Days', '91+ Days'],
-            datasets: [
-                {
-                    label: 'Vaccination to Onset',
-                    data: vaccToOnset,
-                    backgroundColor: 'rgba(44, 73, 124, 0.92)',
-                },
-                {
-                    label: 'Onset to Notification',
-                    data: onsetToNotification,
-                    backgroundColor: 'rgba(44, 74, 124, 0.62)',
-                },
-                {
-                    label: 'Notification to Report',
-                    data: notificationToReport,
-                    backgroundColor: 'rgba(44, 74, 124, 0.48)',
-                }
-            ]
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -37,7 +44,11 @@ function renderTemporalAnalysisChart(containerId, data) {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.dataset.label}: ${context.raw} cases`;
+                            const dataset = context.dataset;
+                            const count = context.raw;
+                            const total = dataset.total;
+                            const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                            return `${dataset.label}: ${count} cases (${percentage}%)`;
                         }
                     }
                 }
@@ -122,7 +133,7 @@ function processTemporalData(data) {
  * @returns {Array<number>} - An array with the count for each category.
  */
 function groupGaps(gaps) {
-    const groups = [0, 0, 0, 0]; // 0-7, 8-30, 31-90, 91+
+    const groups = [0, 0, 0, 0]; // 0-7, 8-30, 31-90, 91+ 
     gaps.forEach(gap => {
         if (gap <= 7) groups[0]++;
         else if (gap <= 30) groups[1]++;

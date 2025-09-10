@@ -22,14 +22,14 @@ function renderAgeDistributionChart(containerId, data) {
         }
     });
 
+    const totalCases = data.length;
+
     // 2. Prepare Chart.js Configuration
-    const total = data.length;
-    const ageGroupPercentages = Object.values(ageGroups).map(count => total > 0 ? (count / total) * 100 : 0);
     const chartData = {
         labels: Object.keys(ageGroups),
         datasets: [{
             label: 'Patient Age',
-            data: ageGroupPercentages,
+            data: Object.values(ageGroups),
             backgroundColor: '#2C4A7C'
         }]
     };
@@ -44,24 +44,17 @@ function renderAgeDistributionChart(containerId, data) {
         },
         scales: {
             x: {
-                beginAtZero: true,
-                max: 100,
-                ticks: {
-                    callback: function(value) {
-                        return value + '%';
-                    }
-                }
+                beginAtZero: true
             }
         },
         plugins: {
-            legend: { display: true },
+            legend: { display: false },
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        const group = context.label;
-                        const count = ageGroups[group];
-                        const percentage = context.raw.toFixed(1);
-                        return `${group}: ${count} cases (${percentage}%)`;
+                        const count = context.raw;
+                        const percentage = totalCases > 0 ? ((count / totalCases) * 100).toFixed(1) : 0;
+                        return `Cases: ${count} (${percentage}%)`;
                     }
                 }
             }

@@ -63,7 +63,8 @@ const adverseEvents = adverseEventField.split(/[,]+/);
             chartData,
             chartOptions,
             tableData,
-            tableHeaders
+            tableHeaders, 
+            true
         );
 
     } catch (error) {

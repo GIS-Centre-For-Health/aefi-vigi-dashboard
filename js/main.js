@@ -215,14 +215,27 @@ function populateFilterOptions(data) {
     
     const vaccineSelect = document.getElementById('vaccine-filter');
     clearSelectOptions(vaccineSelect, true);
-    const vaccines = getUniqueValues(data, 'Vaccine');
-    vaccines.forEach(vaccine => {
-        if (vaccine) {
-            const option = document.createElement('option');
-            option.value = vaccine;
-            option.textContent = vaccine;
-            vaccineSelect.appendChild(option);
+    
+    // Correctly parse vaccines using the vaccine_parser.js logic
+    const vaccineSet = new Set();
+    data.forEach(row => {
+        const vaccineField = row['Vaccine'];
+        if (vaccineField && typeof vaccineField === 'string') {
+            const vaccines = parseVaccineField(vaccineField);
+            vaccines.forEach(vaccine => {
+                if (vaccine) {
+                    vaccineSet.add(vaccine);
+                }
+            });
         }
+    });
+
+    const sortedVaccines = Array.from(vaccineSet).sort();
+    sortedVaccines.forEach(vaccine => {
+        const option = document.createElement('option');
+        option.value = vaccine;
+        option.textContent = vaccine;
+        vaccineSelect.appendChild(option);
     });
 }
 

@@ -1,6 +1,7 @@
 function renderSeriousReasonChart(containerId, reasonCounts) {
     // 1. Unique Data Processing
     const chartData = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]);
+    const totalReasons = chartData.reduce((sum, [, count]) => sum + count, 0);
 
     // 2. Prepare Chart.js Configuration
     const chartConfigData = {
@@ -25,7 +26,9 @@ function renderSeriousReasonChart(containerId, reasonCounts) {
             tooltip: {
                 callbacks: {
                     label: function(context) {
-                        return `Cases: ${context.raw}`;
+                        const count = context.raw;
+                        const percentage = totalReasons > 0 ? ((count / totalReasons) * 100).toFixed(1) : 0;
+                        return `Cases: ${count} (${percentage}%)`;
                     }
                 }
             }

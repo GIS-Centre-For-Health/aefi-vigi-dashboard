@@ -92,7 +92,8 @@ function parseDate(dateStr, fieldName, recordId) {
             date = new Date(str);
         }
         // Format: DD-MM-YYYY or DD/MM/YYYY
-        else if (/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(str)) {
+        else if (/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(str))
+         {
             const parts = str.split(/[-\/]/);
             date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
         }
@@ -487,8 +488,12 @@ function createChart(containerId, title, type, data, options = {}, containerHTML
     }
 }
 
-function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders) {
+function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders, scrollable = false) {
     const total = tableData.reduce((sum, row) => sum + row[1], 0);
+
+    const chartContentHTML = scrollable
+        ? `<div class="chart-scroll-container"><div class="chart-canvas-wrapper"><canvas></canvas></div></div>`
+        : `<canvas></canvas>`;
 
     const containerHTML = `
         <div class="chart-header">
@@ -499,7 +504,7 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
             </div>
         </div>
         <div class="chart-content active">
-            <canvas></canvas>
+            ${chartContentHTML}
         </div>
         <div class="table-content">
             <table>
@@ -559,6 +564,15 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
     }
 
     const canvas = container.querySelector('canvas');
+    if (scrollable) {
+        const canvasWrapper = container.querySelector('.chart-canvas-wrapper');
+        if (canvasWrapper) {
+            const barHeight = 30; // pixels per bar
+            const chartHeight = chartData.labels.length * barHeight;
+            canvasWrapper.style.height = `${chartHeight}px`;
+        }
+    }
+
     const chart = new Chart(canvas, {
         type: 'bar',
         data: chartData,

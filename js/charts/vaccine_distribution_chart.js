@@ -54,7 +54,8 @@ function renderVaccineDistributionChart(containerId, data) {
             chartData,
             chartOptions,
             tableData,
-            tableHeaders
+            tableHeaders,
+            true
         );
 
     } catch (error) {
