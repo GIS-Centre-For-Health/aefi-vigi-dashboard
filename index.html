@@ -50,14 +50,12 @@
                 </select>
             </div>
             
-            <div class="filter-group">
-                <label for="date-range">Date Range</label>
-                <select id="date-range">
-                    <option value="all">All Time</option>
-                    <option value="last30">Last 30 Days</option>
-                    <option value="last90">Last 90 Days</option>
-                    <option value="last180">Last 180 Days</option>
-                </select>
+            <div class="filter-group date-range-container">
+                <label for="date-from-filter">Date Range</label>
+                <div class="date-inputs">
+                    <input type="date" id="date-from-filter" placeholder="From">
+                    <input type="date" id="date-to-filter" placeholder="To">
+                </div>
             </div>
             
             <div class="filter-group">

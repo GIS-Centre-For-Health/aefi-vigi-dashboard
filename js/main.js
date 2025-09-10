@@ -4,6 +4,7 @@
 let rawData = [];
 let filteredData = [];
 let activeCharts = {};
+let minDate, maxDate;
 // Safely initialize the dictionary, checking if the function exists first.
 let vaccineDictionary = typeof getVaccineDictionary === 'function' ? getVaccineDictionary() : new Set();
 
@@ -237,6 +238,16 @@ function populateFilterOptions(data) {
         option.textContent = vaccine;
         vaccineSelect.appendChild(option);
     });
+
+    // Set date range defaults
+    const reportDates = data.map(row => parseDate(row['Date of report'])).filter(date => date);
+    if (reportDates.length > 0) {
+        minDate = new Date(Math.min.apply(null, reportDates));
+        maxDate = new Date(Math.max.apply(null, reportDates));
+        
+        document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
+    }
 }
 
 ///////////////////////////////////////////////////////////
@@ -268,7 +279,8 @@ function applyFilters() {
     showLoading('Applying filters...');
     
     const regionFilter = document.getElementById('region-filter').value;
-    const dateRange = document.getElementById('date-range').value;
+    const dateFromFilter = document.getElementById('date-from-filter').value;
+    const dateToFilter = document.getElementById('date-to-filter').value;
     const vaccineFilter = document.getElementById('vaccine-filter').value;
     const seriousnessFilter = document.getElementById('seriousness-filter').value;
     
@@ -297,20 +309,23 @@ function applyFilters() {
             return false;
         });
     }
-    if (dateRange !== 'all') {
-        const now = new Date();
-        let startDate;
-        switch (dateRange) {
-            case 'last30': startDate = new Date(now.setDate(now.getDate() - 30)); break;
-            case 'last90': startDate = new Date(now.setDate(now.getDate() - 90)); break;
-            case 'last180': startDate = new Date(now.setDate(now.getDate() - 180)); break;
-        }
-        if (startDate) {
-            filteredData = filteredData.filter(row => {
-                const reportDate = parseDate(row['Date of report']);
-                return reportDate && reportDate >= startDate;
-            });
-        }
+    
+    const startDate = dateFromFilter ? new Date(dateFromFilter) : null;
+    const endDate = dateToFilter ? new Date(dateToFilter) : null;
+
+    if (startDate || endDate) {
+        filteredData = filteredData.filter(row => {
+            const reportDate = parseDate(row['Date of report']);
+            if (!reportDate) return false;
+
+            if (startDate && reportDate < startDate) {
+                return false;
+            }
+            if (endDate && reportDate > endDate) {
+                return false;
+            }
+            return true;
+        });
     }
     
     generateAllCharts(filteredData);
@@ -323,35 +338,21 @@ function applyFilters() {
 function resetFilters() {
     // Reset filter inputs
     document.getElementById('region-filter').value = 'all';
-    document.getElementById('date-range').value = 'all';
     document.getElementById('vaccine-filter').value = 'all';
     document.getElementById('seriousness-filter').value = 'all';
     
-    // Clear data
-    rawData = [];
-    filteredData = [];
+    if (minDate && maxDate) {
+        document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
+    } else {
+        document.getElementById('date-from-filter').value = '';
+        document.getElementById('date-to-filter').value = '';
+    }
     
-    // Clear charts
-    Object.values(activeCharts).forEach(chart => chart.destroy());
-    activeCharts = {};
-    
-    // Hide dashboard sections
-    document.getElementById('filter-section').style.display = 'none';
-    document.getElementById('summary-section').style.display = 'none';
-    document.getElementById('visualization-container').style.display = 'none';
-    document.getElementById('file-info').textContent = '';
-
-    // Re-enable upload button
-    const uploadInput = document.getElementById('upload');
-    const uploadLabel = document.querySelector('.file-label');
-    uploadInput.disabled = false;
-    uploadInput.value = ''; // Clear the file input
-    uploadLabel.style.cursor = 'pointer';
-    uploadLabel.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    document.getElementById('file-label-text').textContent = 'Upload AEFI Excel File';
-    
-    showSuccess('Dashboard has been reset.');
+    // Re-apply filters to show all data
+    applyFilters();
 }
+
 
 function exportData(type) {
     showLoading(`Preparing ${type.toUpperCase()} export...`);

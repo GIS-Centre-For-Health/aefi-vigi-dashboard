@@ -159,11 +159,16 @@ h1 {
     font-weight: bold;
 }
 
-.filter-group select {
+.filter-group select, .filter-group input[type="date"] {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ddd;
+}
+
+.date-range-container .date-inputs {
+    display: flex;
+    gap: 10px;
 }
 
 .action-buttons {
