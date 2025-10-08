@@ -258,22 +258,22 @@ function generateSummaryStats(data) {
 
     const patientIds = Object.keys(patients);
     const totalPatients = patientIds.length;
-    // const patientsWithSeriousEvents = patientIds.filter(id => patients[id].hasSeriousEvent).length;
+    const patientsWithSeriousEvents = patientIds.filter(id => patients[id].hasSeriousEvent).length;
     const totalSeriousEvents = patientIds.reduce((acc, id) => acc + patients[id].seriousEventCount, 0);
 
-    // const uniqueVaccineSet = new Set();
-    // data.forEach(row => {
-    //     const vaccineValue = row.Vaccine;
-    //     if (typeof vaccineValue === 'string') {
-    //         const vaccineArray = vaccineValue.split(',').map(v => v.trim());
-    //         vaccineArray.forEach(vaccine => {
-    //             if (vaccine) {
-    //                 uniqueVaccineSet.add(vaccine);
-    //             }
-    //         });
-    //     }
-    // });
-    // const uniqueVaccines = uniqueVaccineSet.size;
+    const uniqueVaccineSet = new Set();
+    data.forEach(row => {
+        const vaccineValue = row.Vaccine;
+        if (typeof vaccineValue === 'string') {
+            const vaccineArray = vaccineValue.split(',').map(v => v.trim());
+            vaccineArray.forEach(vaccine => {
+                if (vaccine) {
+                    uniqueVaccineSet.add(vaccine);
+                }
+            });
+        }
+    });
+    const uniqueVaccines = uniqueVaccineSet.size;
 
     const reportingProvinces = getUniqueValues(data, 'Patient state or province').length;
     
