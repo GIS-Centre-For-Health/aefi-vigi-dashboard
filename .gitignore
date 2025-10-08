@@ -149,3 +149,7 @@ aefi_deploy_key.pub
 
 # Temporary Excel files
 ~$*.xlsx
+
+.claude/
+CLAUDE.md
+*.md
