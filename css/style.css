@@ -141,22 +141,22 @@ h1 {
 /* --- Filter Section --- */
 .filter-section {
     width: 100%;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
     margin-top: 15px;
-    justify-content: space-between;
 }
 
 .filter-group {
-    flex: 1;
-    min-width: 200px;
+    display: flex;
+    flex-direction: column;
 }
 
 .filter-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    white-space: nowrap;
 }
 
 .filter-group select, .filter-group input[type="date"] {
@@ -169,6 +169,11 @@ h1 {
 .date-range-container .date-inputs {
     display: flex;
     gap: 10px;
+}
+
+.date-range-container .date-inputs input[type="date"] {
+    flex: 1;
+    min-width: 0;
 }
 
 .action-buttons {
@@ -614,11 +619,7 @@ footer {
         gap: 1rem;
     }
     .filter-section {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .filter-group {
-        width: 100%;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
     .action-buttons {
         flex-direction: column;
@@ -649,12 +650,11 @@ footer {
         padding: 8px 12px;
         font-size: 0.9rem;
     }
-    .filter-section, .action-buttons {
-        flex-direction: column;
+    .filter-section {
+        grid-template-columns: 1fr;
     }
-    .filter-group {
-        width: 100%;
-        min-width: unset;
+    .action-buttons {
+        flex-direction: column;
     }
     .summary-stats {
         grid-template-columns: 1fr;

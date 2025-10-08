@@ -7,7 +7,7 @@ function renderReporterProvinceDistribution(containerId, data) {
     const chartData = {
         labels: sortedProvinces.map(p => p[0]),
         datasets: [{
-            label: 'Cases by Reporter Province',
+            label: 'Cases by State / Province',
             data: sortedProvinces.map(p => p[1]),
             backgroundColor: '#2C4A7C',
         }]
@@ -54,7 +54,7 @@ function renderReporterProvinceDistribution(containerId, data) {
     // 4. Call the reusable utility function
     createBarChart(
         containerId,
-        'Reporter State or Province',
+        'Cases by State / Province',
         chartData,
         chartOptions,
         tableData,

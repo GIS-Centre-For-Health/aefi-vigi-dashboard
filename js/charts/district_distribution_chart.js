@@ -29,7 +29,7 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
 
     return createBarChart(
         'districtDistributionChartContainer',
-        'Cases by Health Facility Districts',
+        'Cases by Districts',
         chartData,
         chartOptions,
         sortedDistricts,

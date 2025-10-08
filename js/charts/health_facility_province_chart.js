@@ -5,7 +5,7 @@ function createHealthFacilityProvinceChart(data, chartInstances, chartId) {
     const chartData = {
         labels: sortedProvinces.map(p => p[0]),
         datasets: [{
-            label: 'Cases by Health Facility State or Province',
+            label: 'Cases by State or Province',
             data: sortedProvinces.map(p => p[1]),
             backgroundColor: '#2C4A7C',
         }]
@@ -29,7 +29,7 @@ function createHealthFacilityProvinceChart(data, chartInstances, chartId) {
 
     return createBarChart(
         'healthFacilityProvinceChartContainer',
-        'Cases by Health Facility State or Province',
+        'Cases by State or Province',
         chartData,
         chartOptions,
         sortedProvinces,
