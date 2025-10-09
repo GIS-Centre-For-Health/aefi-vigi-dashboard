@@ -113,7 +113,7 @@ function renderNotificationToReportChart(containerId, data, isSerious) {
         ]);
     });
 
-    const tableHeaders = ['Time Interval', 'Notification → Report'];
+    const tableHeaders = ['Time Interval', 'Notification → Report', 'Percentage'];
 
     // Create the chart using utility function
     createBarChart(

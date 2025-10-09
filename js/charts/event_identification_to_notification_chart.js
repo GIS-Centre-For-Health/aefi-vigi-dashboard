@@ -114,30 +114,128 @@ function renderEventIdentificationChart(containerId, data, isSerious) {
         }
     };
 
-    // Prepare table data
-    const tableData = [];
-    const labels = ['0-2 Days', '3-7 Days', '8-30 Days', '31-90 Days', '91+ Days'];
+    // Create custom dual-dataset table (not using createBarChart as it's for single dataset)
+    const container = document.getElementById(containerId);
 
-    labels.forEach((label, index) => {
-        tableData.push([
-            label,
-            vaccToOnsetCounts[index],
-            onsetToNotificationCounts[index]
-        ]);
+    const containerHTML = `
+        <div class="chart-header">
+            <h3 class="chart-title">${chartTitle}</h3>
+            <div class="chart-container-tabs">
+                <button class="chart-container-tab active" data-view="chart">Chart</button>
+                <button class="chart-container-tab" data-view="table">Table</button>
+            </div>
+        </div>
+        <div class="chart-content active">
+            <canvas></canvas>
+        </div>
+        <div class="table-content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time Interval</th>
+                        <th>Vaccination → Onset</th>
+                        <th>%</th>
+                        <th>Onset → Notification</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    `;
+
+    container.innerHTML = containerHTML;
+
+    // Create Chart.js instance
+    const canvas = container.querySelector('canvas');
+    const chart = new Chart(canvas, {
+        type: 'bar',
+        data: chartData,
+        options: chartOptions
     });
 
-    const tableHeaders = ['Time Interval', 'Vaccination → Onset', 'Onset → Notification'];
+    activeCharts[containerId] = chart;
 
-    // Create the chart using utility function
-    createBarChart(
-        containerId,
-        chartTitle,
-        chartData,
-        chartOptions,
-        tableData,
-        tableHeaders,
-        false
-    );
+    // Populate table with data
+    const tableBody = container.querySelector('tbody');
+    const labels = ['0-2 Days', '3-7 Days', '8-30 Days', '31-90 Days', '91+ Days'];
+
+    const totalVacc = vaccToOnsetCounts.reduce((a, b) => a + b, 0);
+    const totalOnset = onsetToNotificationCounts.reduce((a, b) => a + b, 0);
+
+    labels.forEach((label, index) => {
+        const tr = document.createElement('tr');
+
+        const tdInterval = document.createElement('td');
+        tdInterval.textContent = label;
+        tr.appendChild(tdInterval);
+
+        const tdVaccCount = document.createElement('td');
+        tdVaccCount.textContent = vaccToOnsetCounts[index];
+        tr.appendChild(tdVaccCount);
+
+        const tdVaccPct = document.createElement('td');
+        const vaccPct = totalVacc > 0 ? ((vaccToOnsetCounts[index] / totalVacc) * 100).toFixed(2) : '0.00';
+        tdVaccPct.textContent = `${vaccPct}%`;
+        tr.appendChild(tdVaccPct);
+
+        const tdOnsetCount = document.createElement('td');
+        tdOnsetCount.textContent = onsetToNotificationCounts[index];
+        tr.appendChild(tdOnsetCount);
+
+        const tdOnsetPct = document.createElement('td');
+        const onsetPct = totalOnset > 0 ? ((onsetToNotificationCounts[index] / totalOnset) * 100).toFixed(2) : '0.00';
+        tdOnsetPct.textContent = `${onsetPct}%`;
+        tr.appendChild(tdOnsetPct);
+
+        tableBody.appendChild(tr);
+    });
+
+    // Add total row
+    const totalRow = document.createElement('tr');
+    totalRow.className = 'total-row';
+
+    const tdTotalLabel = document.createElement('td');
+    tdTotalLabel.textContent = 'Total';
+    totalRow.appendChild(tdTotalLabel);
+
+    const tdTotalVacc = document.createElement('td');
+    tdTotalVacc.textContent = totalVacc;
+    totalRow.appendChild(tdTotalVacc);
+
+    const tdTotalVaccPct = document.createElement('td');
+    tdTotalVaccPct.textContent = '100.00%';
+    totalRow.appendChild(tdTotalVaccPct);
+
+    const tdTotalOnset = document.createElement('td');
+    tdTotalOnset.textContent = totalOnset;
+    totalRow.appendChild(tdTotalOnset);
+
+    const tdTotalOnsetPct = document.createElement('td');
+    tdTotalOnsetPct.textContent = '100.00%';
+    totalRow.appendChild(tdTotalOnsetPct);
+
+    tableBody.appendChild(totalRow);
+
+    // Set up tab switching
+    const tabs = container.querySelectorAll('.chart-container-tab');
+    const chartContent = container.querySelector('.chart-content');
+    const tableContent = container.querySelector('.table-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            if (tab.dataset.view === 'chart') {
+                chartContent.classList.add('active');
+                tableContent.classList.remove('active');
+            } else {
+                chartContent.classList.remove('active');
+                tableContent.classList.add('active');
+            }
+        });
+    });
 }
 
 /**
