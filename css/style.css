@@ -97,6 +97,7 @@ h1 {
 
 /* Initially hide dashboard sections */
 #filter-section,
+.action-buttons,
 #summary-section,
 #visualization-container {
     display: none;

@@ -221,7 +221,8 @@ function processData(data) {
     generateAllCharts(filteredData);
     
     // Show the main content sections
-    document.getElementById('filter-section').style.display = 'flex';
+    document.getElementById('filter-section').style.display = 'grid';
+    document.querySelector('.action-buttons').style.display = 'flex';
     document.getElementById('summary-section').style.display = 'block';
     document.getElementById('visualization-container').style.display = 'block';
     
