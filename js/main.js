@@ -257,6 +257,7 @@ function resetUI() {
 
     // Hide the main content sections
     document.getElementById('filter-section').style.display = 'none';
+    document.querySelector('.action-buttons').style.display = 'none';
     document.getElementById('summary-section').style.display = 'none';
     document.getElementById('visualization-container').style.display = 'none';
 
