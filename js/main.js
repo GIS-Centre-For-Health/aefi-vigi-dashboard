@@ -315,7 +315,8 @@ function applyFilters() {
       const regionFilter = document.getElementById('region-filter').value;
       const dateFromFilter = document.getElementById('date-from-filter').value;
       const dateToFilter = document.getElementById('date-to-filter').value;
-      const vaccineFilter = document.getElementById('vaccine-filter').value;
+      const vaccineSelect = document.getElementById('vaccine-filter');
+      const selectedVaccines = Array.from(vaccineSelect.selectedOptions).map(option => option.value);
       const seriousnessFilter = document.getElementById('seriousness-filter').value;
 
       let tempFilteredData = [...rawData];
@@ -323,12 +324,13 @@ function applyFilters() {
       if (regionFilter !== 'all') {
           tempFilteredData = tempFilteredData.filter(row => row['Created by organisation level 3'] === regionFilter);
       }
-      if (vaccineFilter !== 'all') {
+      if (selectedVaccines.length > 0 && !selectedVaccines.includes('all')) {
           tempFilteredData = tempFilteredData.filter(row => {
               const vaccineField = row['Vaccine'];
               if (vaccineField && typeof vaccineField === 'string') {
                   const vaccines = parseVaccineField(vaccineField);
-                  return vaccines.includes(vaccineFilter);
+                  // Return true if ANY of the row's vaccines match ANY of the selected vaccines
+                  return vaccines.some(vaccine => selectedVaccines.includes(vaccine));
               }
               return false;
           });
@@ -387,7 +389,13 @@ function resetFilters() {
     showLoading('Resetting filters...');
 
     document.getElementById('region-filter').value = 'all';
-    document.getElementById('vaccine-filter').value = 'all';
+
+    // Clear multi-select vaccine filter
+    const vaccineSelect = document.getElementById('vaccine-filter');
+    Array.from(vaccineSelect.options).forEach(option => {
+        option.selected = option.value === 'all';
+    });
+
     document.getElementById('seriousness-filter').value = 'all';
 
     if (minDate && maxDate) {

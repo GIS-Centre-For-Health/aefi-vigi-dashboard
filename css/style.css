@@ -166,6 +166,28 @@ h1 {
     border: 1px solid #ddd;
 }
 
+/* Multi-select vaccine filter styling */
+.filter-group select[multiple] {
+    padding: 5px;
+    cursor: pointer;
+}
+
+.filter-group select[multiple] option {
+    padding: 8px 10px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    cursor: pointer;
+}
+
+.filter-group select[multiple] option:checked {
+    background: var(--secondary) !important;
+    color: white !important;
+}
+
+.filter-group select[multiple] option:hover {
+    background: var(--bg-hover);
+}
+
 .date-range-container .date-inputs {
     display: flex;
     gap: 10px;
