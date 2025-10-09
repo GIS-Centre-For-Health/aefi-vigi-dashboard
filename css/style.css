@@ -159,11 +159,13 @@ h1 {
     font-weight: bold;
 }
 
-.filter-group select, .filter-group input[type="date"] {
+.filter-group select, .filter-group input[type="date"], .filter-group .multiselect-display {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ddd;
+    font-size: 13.3333px;
+    line-height: normal;
 }
 
 /* Custom multi-select vaccine filter styling */
@@ -173,10 +175,6 @@ h1 {
 }
 
 .multiselect-display {
-    width: 100%;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
     background: white;
     cursor: pointer;
     user-select: none;
