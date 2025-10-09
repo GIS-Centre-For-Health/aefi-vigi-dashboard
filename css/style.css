@@ -180,6 +180,7 @@ h1 {
     background: white;
     cursor: pointer;
     user-select: none;
+    box-sizing: border-box;
 }
 
 .multiselect-display:hover {
@@ -227,6 +228,7 @@ h1 {
     margin: 0;
     flex: 1;
     white-space: normal;
+    font-weight: normal;
 }
 
 .date-range-container .date-inputs {
