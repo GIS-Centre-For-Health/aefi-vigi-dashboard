@@ -165,7 +165,8 @@ h1 {
     border-radius: 5px;
     border: 1px solid #ddd;
     font-size: 13.3333px;
-    line-height: normal;
+    line-height: 1.4;
+    height: 39px;
 }
 
 /* Custom multi-select vaccine filter styling */
