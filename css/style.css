@@ -166,26 +166,67 @@ h1 {
     border: 1px solid #ddd;
 }
 
-/* Multi-select vaccine filter styling */
-.filter-group select[multiple] {
-    padding: 5px;
-    cursor: pointer;
+/* Custom multi-select vaccine filter styling */
+.custom-multiselect {
+    position: relative;
+    width: 100%;
 }
 
-.filter-group select[multiple] option {
+.multiselect-display {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    user-select: none;
+}
+
+.multiselect-display:hover {
+    border-color: var(--secondary);
+}
+
+.multiselect-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 5px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.multiselect-dropdown.active {
+    display: block;
+}
+
+.multiselect-option {
     padding: 8px 10px;
-    border-radius: 3px;
-    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
 }
 
-.filter-group select[multiple] option:checked {
-    background: var(--secondary) !important;
-    color: white !important;
+.multiselect-option:hover {
+    background: var(--bg-hover);
 }
 
-.filter-group select[multiple] option:hover {
-    background: var(--bg-hover);
+.multiselect-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.multiselect-option label {
+    cursor: pointer;
+    margin: 0;
+    flex: 1;
+    white-space: normal;
 }
 
 .date-range-container .date-inputs {

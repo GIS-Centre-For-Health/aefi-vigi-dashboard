@@ -57,7 +57,60 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('export-options').classList.remove('active');
         });
     });
+
+    // Custom multi-select vaccine filter toggle
+    const vaccineDisplay = document.getElementById('vaccine-filter-display');
+    const vaccineDropdown = document.getElementById('vaccine-dropdown');
+
+    vaccineDisplay.addEventListener('click', function(e) {
+        e.stopPropagation();
+        vaccineDropdown.classList.toggle('active');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!vaccineDisplay.contains(e.target) && !vaccineDropdown.contains(e.target)) {
+            vaccineDropdown.classList.remove('active');
+        }
+    });
+
+    // Handle "All Vaccines" checkbox logic
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'vaccine-all') {
+            const allCheckbox = e.target;
+            const otherCheckboxes = document.querySelectorAll('.vaccine-checkbox');
+
+            if (allCheckbox.checked) {
+                otherCheckboxes.forEach(cb => cb.checked = false);
+            }
+            updateVaccineDisplay();
+        } else if (e.target.classList.contains('vaccine-checkbox')) {
+            const allCheckbox = document.getElementById('vaccine-all');
+            if (e.target.checked && allCheckbox) {
+                allCheckbox.checked = false;
+            }
+            updateVaccineDisplay();
+        }
+    });
 });
+
+// Update the display text based on selected vaccines
+function updateVaccineDisplay() {
+    const allCheckbox = document.getElementById('vaccine-all');
+    const vaccineCheckboxes = document.querySelectorAll('.vaccine-checkbox:checked');
+    const display = document.getElementById('vaccine-filter-display');
+
+    if (allCheckbox && allCheckbox.checked) {
+        display.textContent = 'All Vaccines';
+    } else if (vaccineCheckboxes.length === 0) {
+        display.textContent = 'All Vaccines';
+        if (allCheckbox) allCheckbox.checked = true;
+    } else if (vaccineCheckboxes.length === 1) {
+        display.textContent = vaccineCheckboxes[0].value;
+    } else {
+        display.textContent = `${vaccineCheckboxes.length} vaccines selected`;
+    }
+}
 
 ///////////////////////////////////////////////////////////
 // File handling and data processing
@@ -248,9 +301,9 @@ function populateFilterOptions(data) {
         }
     });
     
-    const vaccineSelect = document.getElementById('vaccine-filter');
-    clearSelectOptions(vaccineSelect, true);
-    
+    // Populate custom multi-select dropdown with vaccine options
+    const vaccineDropdown = document.getElementById('vaccine-dropdown');
+
     // Correctly parse vaccines using the vaccine_parser.js logic
     const vaccineSet = new Set();
     data.forEach(row => {
@@ -267,10 +320,22 @@ function populateFilterOptions(data) {
 
     const sortedVaccines = Array.from(vaccineSet).sort();
     sortedVaccines.forEach(vaccine => {
-        const option = document.createElement('option');
-        option.value = vaccine;
-        option.textContent = vaccine;
-        vaccineSelect.appendChild(option);
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'multiselect-option';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `vaccine-${vaccine.replace(/[^a-zA-Z0-9]/g, '-')}`;
+        checkbox.value = vaccine;
+        checkbox.classList.add('vaccine-checkbox');
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = vaccine;
+
+        optionDiv.appendChild(checkbox);
+        optionDiv.appendChild(label);
+        vaccineDropdown.appendChild(optionDiv);
     });
 
     // Set date range defaults
@@ -315,8 +380,12 @@ function applyFilters() {
       const regionFilter = document.getElementById('region-filter').value;
       const dateFromFilter = document.getElementById('date-from-filter').value;
       const dateToFilter = document.getElementById('date-to-filter').value;
-      const vaccineSelect = document.getElementById('vaccine-filter');
-      const selectedVaccines = Array.from(vaccineSelect.selectedOptions).map(option => option.value);
+
+      // Get selected vaccines from checkboxes
+      const allVaccinesChecked = document.getElementById('vaccine-all')?.checked;
+      const selectedVaccines = allVaccinesChecked ? [] :
+          Array.from(document.querySelectorAll('.vaccine-checkbox:checked')).map(cb => cb.value);
+
       const seriousnessFilter = document.getElementById('seriousness-filter').value;
 
       let tempFilteredData = [...rawData];
@@ -390,11 +459,11 @@ function resetFilters() {
 
     document.getElementById('region-filter').value = 'all';
 
-    // Clear multi-select vaccine filter
-    const vaccineSelect = document.getElementById('vaccine-filter');
-    Array.from(vaccineSelect.options).forEach(option => {
-        option.selected = option.value === 'all';
-    });
+    // Reset vaccine checkboxes
+    const allCheckbox = document.getElementById('vaccine-all');
+    if (allCheckbox) allCheckbox.checked = true;
+    document.querySelectorAll('.vaccine-checkbox').forEach(cb => cb.checked = false);
+    updateVaccineDisplay();
 
     document.getElementById('seriousness-filter').value = 'all';
 

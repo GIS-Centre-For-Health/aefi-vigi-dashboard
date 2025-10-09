@@ -66,10 +66,18 @@
             </div>
             
             <div class="filter-group">
-                <label for="vaccine-filter">Vaccine Filter (Ctrl+Click for multiple)</label>
-                <select id="vaccine-filter" multiple>
-                    <option value="all" selected>All Vaccines</option>
-                </select>
+                <label for="vaccine-filter-display">Vaccine Filter</label>
+                <div class="custom-multiselect">
+                    <div class="multiselect-display" id="vaccine-filter-display">
+                        All Vaccines
+                    </div>
+                    <div class="multiselect-dropdown" id="vaccine-dropdown">
+                        <div class="multiselect-option">
+                            <input type="checkbox" id="vaccine-all" value="all" checked>
+                            <label for="vaccine-all">All Vaccines</label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="filter-group">
