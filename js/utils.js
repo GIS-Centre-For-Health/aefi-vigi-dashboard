@@ -258,22 +258,7 @@ function generateSummaryStats(data) {
 
     const patientIds = Object.keys(patients);
     const totalPatients = patientIds.length;
-    const patientsWithSeriousEvents = patientIds.filter(id => patients[id].hasSeriousEvent).length;
     const totalSeriousEvents = patientIds.reduce((acc, id) => acc + patients[id].seriousEventCount, 0);
-
-    const uniqueVaccineSet = new Set();
-    data.forEach(row => {
-        const vaccineValue = row.Vaccine;
-        if (typeof vaccineValue === 'string') {
-            const vaccineArray = vaccineValue.split(',').map(v => v.trim());
-            vaccineArray.forEach(vaccine => {
-                if (vaccine) {
-                    uniqueVaccineSet.add(vaccine);
-                }
-            });
-        }
-    });
-    const uniqueVaccines = uniqueVaccineSet.size;
 
     const reportingProvinces = getUniqueValues(data, 'Patient state or province').length;
     
@@ -289,11 +274,8 @@ function generateSummaryStats(data) {
     const stats = [
         { title: 'Total Reports', value: totalRecords.toLocaleString() },
         { title: 'Total Patients', value: totalPatients.toLocaleString() },
-        { title: 'Patients with Serious Events', value: `${patientsWithSeriousEvents.toLocaleString()} (${(totalPatients > 0 ? (patientsWithSeriousEvents / totalPatients) * 100 : 0).toFixed(1)}%)` },
         { title: 'Total Serious Events', value: totalSeriousEvents.toLocaleString() },
-        { title: 'Unique Vaccines', value: uniqueVaccines.toLocaleString() },
         { title: 'Reporting Provinces', value: reportingProvinces.toLocaleString() },
-        // { title: 'Average Age', value: averageAgeFormatted }
     ];
 
     stats.forEach(stat => {

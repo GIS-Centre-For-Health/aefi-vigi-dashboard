@@ -50,7 +50,7 @@ function renderSeriousReasonChart(containerId, reasonCounts) {
     // 4. Call the reusable utility function
     createBarChart(
         containerId,
-        'Distribution of Reasons for Serious Events',
+        'Criteria for Serious Cases',
         chartConfigData,
         chartOptions,
         tableData,

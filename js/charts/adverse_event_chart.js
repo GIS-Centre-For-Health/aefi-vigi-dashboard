@@ -47,7 +47,7 @@ function renderAdverseEventChart(containerId, events) {
     // 4. Call the reusable utility function
     createBarChart(
         containerId,
-        'AEFI Adverse Events',
+        'Adverse Events',
         chartData,
         chartOptions,
         tableData,
