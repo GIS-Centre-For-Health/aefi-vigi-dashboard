@@ -17,12 +17,32 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
         maintainAspectRatio: false,
         scales: {
             x: {
-                beginAtZero: true
+                beginAtZero: true,
+                ticks: {
+                    font: {
+                        size: 14
+                    }
+                }
+            },
+            y: {
+                ticks: {
+                    font: {
+                        size: 14
+                    }
+                }
             }
         },
         plugins: {
             legend: {
                 display: false
+            }
+        },
+        layout: {
+            padding: {
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 10
             }
         }
     };
@@ -34,6 +54,7 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
         chartOptions,
         sortedDistricts,
         ['District', 'Number of Cases', 'Percentage'],
-        true
+        true,
+        60  // Larger bar height for better space utilization
     );
 }

@@ -161,8 +161,22 @@
         </div>
         
         <div id="temporal-section" class="chart-section">
-            <div class="chart-grid">
-                <div id="temporalAnalysisChartContainer" class="chart-container"></div>
+            <!-- SERIOUS AEFIs SECTION -->
+            <h2 class="section-heading">Serious AEFIs</h2>
+            <p class="section-description">Timeline analysis for serious adverse events following immunization</p>
+
+            <div class="chart-grid dual-chart">
+                <div id="seriousIdentificationChartContainer" class="chart-container"></div>
+                <div id="seriousReportingChartContainer" class="chart-container"></div>
+            </div>
+
+            <!-- NON-SERIOUS AEFIs SECTION -->
+            <h2 class="section-heading">Non-Serious AEFIs</h2>
+            <p class="section-description">Timeline analysis for non-serious adverse events following immunization</p>
+
+            <div class="chart-grid dual-chart">
+                <div id="nonSeriousIdentificationChartContainer" class="chart-container"></div>
+                <div id="nonSeriousReportingChartContainer" class="chart-container"></div>
             </div>
         </div>
         
@@ -202,7 +216,11 @@
     <script src="js/charts/adverse_event_chart.js" defer></script>
     <script src="js/charts/serious_event_chart.js" defer></script>
     <script src="js/charts/serious_reason_chart.js" defer></script>
-    <script src="js/charts/temporal_analysis_chart.js" defer></script>
+    <!-- Old temporal analysis - deprecated -->
+    <!-- <script src="js/charts/temporal_analysis_chart.js" defer></script> -->
+    <!-- New temporal analysis - separated by serious/non-serious -->
+    <script src="js/charts/event_identification_to_notification_chart.js" defer></script>
+    <script src="js/charts/notification_to_reporting_chart.js" defer></script>
     <script src="js/charts/vaccine_distribution_chart.js" defer></script>
     <script src="js/charts/vaccine_adverse_events_chart.js" defer></script>
     <script src="js/main.js" defer></script>

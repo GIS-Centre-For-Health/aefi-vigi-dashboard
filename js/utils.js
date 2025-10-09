@@ -477,7 +477,7 @@ function createChart(containerId, title, type, data, options = {}, containerHTML
     }
 }
 
-function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders, scrollable = false) {
+function createBarChart(containerId, title, chartData, chartOptions, tableData, tableHeaders, scrollable = false, barHeight = 30) {
     const total = tableData.reduce((sum, row) => sum + row[1], 0);
 
     const chartContentHTML = scrollable
@@ -516,7 +516,7 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
     if (tableBody) {
         tableData.forEach(row => {
             const tr = document.createElement('tr');
-            
+
             const cell1 = document.createElement('td');
             cell1.textContent = row[0];
             tr.appendChild(cell1);
@@ -536,7 +536,7 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
         // Add total row
         const totalRow = document.createElement('tr');
         totalRow.className = 'total-row';
-        
+
         const totalCell1 = document.createElement('td');
         totalCell1.textContent = 'Total';
         totalRow.appendChild(totalCell1);
@@ -548,7 +548,7 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
         const totalCell3 = document.createElement('td');
         totalCell3.textContent = '100.00%';
         totalRow.appendChild(totalCell3);
-        
+
         tableBody.appendChild(totalRow);
     }
 
@@ -556,7 +556,7 @@ function createBarChart(containerId, title, chartData, chartOptions, tableData, 
     if (scrollable) {
         const canvasWrapper = container.querySelector('.chart-canvas-wrapper');
         if (canvasWrapper) {
-            const barHeight = 30; // pixels per bar
+            // Use the custom barHeight parameter (default 30px if not specified)
             const chartHeight = chartData.labels.length * barHeight;
             canvasWrapper.style.height = `${chartHeight}px`;
         }

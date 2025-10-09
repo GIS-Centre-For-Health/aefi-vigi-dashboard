@@ -25,7 +25,10 @@ const chartRegistry = {
         { func: generateSeriousReasonDistribution, container: 'seriousReasonChart' },
     ],
     temporal: [
-        { func: generateTemporalAnalysis, container: 'temporalAnalysisChartContainer' },
+        { func: generateSeriousIdentificationChart, container: 'seriousIdentificationChartContainer' },
+        { func: generateSeriousReportingChart, container: 'seriousReportingChartContainer' },
+        { func: generateNonSeriousIdentificationChart, container: 'nonSeriousIdentificationChartContainer' },
+        { func: generateNonSeriousReportingChart, container: 'nonSeriousReportingChartContainer' }
     ],
     vaccine: [
         { func: generateVaccineDistributionChart, container: 'vaccineDistributionChartContainer' },
@@ -635,8 +638,24 @@ function generateSeriousReasonDistribution(data) {
     renderSeriousReasonChart('seriousReasonChart', reasonCounts);
 }
 
-function generateTemporalAnalysis(data) {
-    renderTemporalAnalysisChart('temporalAnalysisChartContainer', data);
+// Serious AEFIs - Identification to Notification
+function generateSeriousIdentificationChart(data) {
+    renderEventIdentificationChart('seriousIdentificationChartContainer', data, true);
+}
+
+// Serious AEFIs - Notification to Reporting
+function generateSeriousReportingChart(data) {
+    renderNotificationToReportChart('seriousReportingChartContainer', data, true);
+}
+
+// Non-Serious AEFIs - Identification to Notification
+function generateNonSeriousIdentificationChart(data) {
+    renderEventIdentificationChart('nonSeriousIdentificationChartContainer', data, false);
+}
+
+// Non-Serious AEFIs - Notification to Reporting
+function generateNonSeriousReportingChart(data) {
+    renderNotificationToReportChart('nonSeriousReportingChartContainer', data, false);
 }
 
 function generateVaccineDistributionChart(data) {
