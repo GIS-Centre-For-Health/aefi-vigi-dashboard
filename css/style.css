@@ -156,7 +156,6 @@ h1 {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
-    white-space: nowrap;
 }
 
 .filter-group select, .filter-group input[type="date"] {
