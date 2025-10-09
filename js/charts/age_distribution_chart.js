@@ -71,7 +71,7 @@ function renderAgeDistributionChart(containerId, data) {
     // 4. Call the reusable utility function
     createBarChart(
         containerId,
-        'AEFI cases by Age',
+        'Cases by Age',
         chartData,
         chartOptions,
         tableData,

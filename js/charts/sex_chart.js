@@ -13,7 +13,7 @@ function renderSexChart(containerId, data) {
 
     const containerHTML = `
         <div class="chart-header">
-            <h3 class="chart-title">AEFI cases by Sex</h3>
+            <h3 class="chart-title">Cases by Sex</h3>
             <div class="chart-container-tabs">
                 <button class="chart-container-tab active" data-view="chart">Chart</button>
                 <button class="chart-container-tab" data-view="table">Table</button>
@@ -38,7 +38,7 @@ function renderSexChart(containerId, data) {
     `;
 
     // Create the chart structure first
-    createChart(containerId, 'AEFI cases by Sex', 'pie', {}, {}, containerHTML);
+    createChart(containerId, 'Cases by Sex', 'pie', {}, {}, containerHTML);
 
     // **XSS Fix: Safely create and append table rows**
     const tableBody = document.querySelector(`#${containerId} tbody`);
