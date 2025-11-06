@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
             updateVaccineDisplay();
         }
     });
+
+    // Year filter change handler
+    document.getElementById('year-filter').addEventListener('change', handleYearChange);
+
+    // Month filter change handlers
+    document.getElementById('month-from-filter').addEventListener('change', handleMonthChange);
+    document.getElementById('month-to-filter').addEventListener('change', handleMonthChange);
 });
 
 // Update the display text based on selected vaccines
@@ -112,6 +119,89 @@ function updateVaccineDisplay() {
         display.textContent = vaccineCheckboxes[0].value;
     } else {
         display.textContent = `${vaccineCheckboxes.length} vaccines selected`;
+    }
+}
+
+// Handle year filter change
+function handleYearChange() {
+    const yearFilter = document.getElementById('year-filter');
+    const monthFromFilter = document.getElementById('month-from-filter');
+    const monthToFilter = document.getElementById('month-to-filter');
+
+    if (yearFilter.value === 'all') {
+        // Disable month filters and reset them
+        monthFromFilter.disabled = true;
+        monthToFilter.disabled = true;
+        monthFromFilter.value = '';
+        monthToFilter.value = '';
+
+        // Reset date filters to show all data
+        if (minDate && maxDate) {
+            document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
+            document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
+        }
+    } else {
+        // Enable month filters
+        monthFromFilter.disabled = false;
+        monthToFilter.disabled = false;
+
+        // Set date range to the full selected year
+        const selectedYear = parseInt(yearFilter.value);
+        const yearStart = new Date(selectedYear, 0, 1);
+        const yearEnd = new Date(selectedYear, 11, 31);
+
+        document.getElementById('date-from-filter').value = yearStart.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = yearEnd.toISOString().split('T')[0];
+    }
+}
+
+// Handle month filter change
+function handleMonthChange() {
+    const yearFilter = document.getElementById('year-filter');
+    const monthFromFilter = document.getElementById('month-from-filter');
+    const monthToFilter = document.getElementById('month-to-filter');
+
+    // Only proceed if a year is selected
+    if (yearFilter.value === 'all') {
+        return;
+    }
+
+    const selectedYear = parseInt(yearFilter.value);
+    const monthFrom = monthFromFilter.value;
+    const monthTo = monthToFilter.value;
+
+    // If both months are selected, update date range
+    if (monthFrom && monthTo) {
+        const fromMonth = parseInt(monthFrom) - 1; // JavaScript months are 0-indexed
+        const toMonth = parseInt(monthTo) - 1;
+
+        // Validate that from month is not after to month
+        if (fromMonth > toMonth) {
+            showError('Start month cannot be after end month. Please adjust your selection.');
+            return;
+        }
+
+        const startDate = new Date(selectedYear, fromMonth, 1);
+        const endDate = new Date(selectedYear, toMonth + 1, 0); // Last day of the to month
+
+        document.getElementById('date-from-filter').value = startDate.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = endDate.toISOString().split('T')[0];
+    } else if (monthFrom) {
+        // Only from month selected, set range from that month to end of year
+        const fromMonth = parseInt(monthFrom) - 1;
+        const startDate = new Date(selectedYear, fromMonth, 1);
+        const endDate = new Date(selectedYear, 11, 31);
+
+        document.getElementById('date-from-filter').value = startDate.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = endDate.toISOString().split('T')[0];
+    } else if (monthTo) {
+        // Only to month selected, set range from beginning of year to that month
+        const toMonth = parseInt(monthTo) - 1;
+        const startDate = new Date(selectedYear, 0, 1);
+        const endDate = new Date(selectedYear, toMonth + 1, 0);
+
+        document.getElementById('date-from-filter').value = startDate.toISOString().split('T')[0];
+        document.getElementById('date-to-filter').value = endDate.toISOString().split('T')[0];
     }
 }
 
@@ -258,6 +348,29 @@ function resetUI() {
     // Clear summary stats
     document.getElementById('summary-stats').innerHTML = '';
 
+    // Reset all filter dropdowns
+    const regionSelect = document.getElementById('region-filter');
+    clearSelectOptions(regionSelect, true);
+
+    const yearSelect = document.getElementById('year-filter');
+    clearSelectOptions(yearSelect, true);
+
+    const vaccineDropdown = document.getElementById('vaccine-dropdown');
+    // Keep only the "All Vaccines" option
+    const allVaccineOption = vaccineDropdown.querySelector('#vaccine-all')?.parentElement;
+    vaccineDropdown.innerHTML = '';
+    if (allVaccineOption) {
+        vaccineDropdown.appendChild(allVaccineOption);
+        document.getElementById('vaccine-all').checked = true;
+    }
+    updateVaccineDisplay();
+
+    // Reset year and month filters
+    document.getElementById('month-from-filter').value = '';
+    document.getElementById('month-to-filter').value = '';
+    document.getElementById('month-from-filter').disabled = true;
+    document.getElementById('month-to-filter').disabled = true;
+
     // Hide the main content sections
     document.getElementById('filter-section').style.display = 'none';
     document.querySelector('.action-buttons').style.display = 'none';
@@ -305,7 +418,7 @@ function populateFilterOptions(data) {
             regionSelect.appendChild(option);
         }
     });
-    
+
     // Populate custom multi-select dropdown with vaccine options
     const vaccineDropdown = document.getElementById('vaccine-dropdown');
 
@@ -343,12 +456,32 @@ function populateFilterOptions(data) {
         vaccineDropdown.appendChild(optionDiv);
     });
 
+    // Extract and populate years from the data
+    const yearSelect = document.getElementById('year-filter');
+    clearSelectOptions(yearSelect, true);
+    const yearSet = new Set();
+
+    data.forEach(row => {
+        const reportDate = parseDate(row['Date of report']);
+        if (reportDate) {
+            yearSet.add(reportDate.getFullYear());
+        }
+    });
+
+    const sortedYears = Array.from(yearSet).sort((a, b) => b - a); // Sort descending (most recent first)
+    sortedYears.forEach(year => {
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        yearSelect.appendChild(option);
+    });
+
     // Set date range defaults
     const reportDates = data.map(row => parseDate(row['Date of report'])).filter(date => date);
     if (reportDates.length > 0) {
         minDate = new Date(Math.min.apply(null, reportDates));
         maxDate = new Date(Math.max.apply(null, reportDates));
-        
+
         document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
         document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
     }
@@ -471,6 +604,13 @@ function resetFilters() {
     updateVaccineDisplay();
 
     document.getElementById('seriousness-filter').value = 'all';
+
+    // Reset year and month filters
+    document.getElementById('year-filter').value = 'all';
+    document.getElementById('month-from-filter').value = '';
+    document.getElementById('month-to-filter').value = '';
+    document.getElementById('month-from-filter').disabled = true;
+    document.getElementById('month-to-filter').disabled = true;
 
     if (minDate && maxDate) {
         document.getElementById('date-from-filter').value = minDate.toISOString().split('T')[0];
