@@ -382,6 +382,24 @@ button {
     background-color: var(--bg-hover);
 }
 
+.chart-back-btn {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    background-color: var(--primary);
+    color: white;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    margin-right: auto;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.chart-back-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateX(-2px);
+}
+
 .chart-content, .table-content {
     display: none; /* Hide by default */
     flex: 1 1 auto;
