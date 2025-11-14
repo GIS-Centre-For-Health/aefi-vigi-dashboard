@@ -269,7 +269,7 @@ function calculateVaccToOnsetGaps(data) {
     const gaps = [];
     data.forEach(row => {
         const vaccDate = parseDate(row['Date of vaccination']);
-        const onsetDate = parseDate(row['Date of onset']);
+        const onsetDate = getEarliestOnsetDate(row);
         if (vaccDate && onsetDate) {
             const diffTime = Math.abs(onsetDate - vaccDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -283,7 +283,7 @@ function calculateVaccToOnsetGaps(data) {
 function calculateOnsetToNotificationGaps(data) {
     const gaps = [];
     data.forEach(row => {
-        const onsetDate = parseDate(row['Date of onset']);
+        const onsetDate = getEarliestOnsetDate(row);
         const notifDate = parseDate(row['Date of notification']);
         if (onsetDate && notifDate) {
             const diffTime = Math.abs(notifDate - onsetDate);

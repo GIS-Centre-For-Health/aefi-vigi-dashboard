@@ -123,6 +123,21 @@ function parseDate(dateStr) {
 }
 
 /**
+ * Extracts the earliest onset date from a case that may have multiple onset dates.
+ * Follows the pattern established in temporal_analysis_chart.js to ensure consistency.
+ *
+ * @param {Object} row - A data row from the dataset.
+ * @returns {Date|null} - The earliest onset date or null if no valid dates found.
+ */
+function getEarliestOnsetDate(row) {
+    const onsetDates = String(row['Date of onset'] || '')
+        .split('\n')
+        .map(parseDate)
+        .filter(d => d instanceof Date && !isNaN(d));
+    return onsetDates.length > 0 ? new Date(Math.min.apply(null, onsetDates)) : null;
+}
+
+/**
  * Extracts unique, non-empty values from a specific field in the dataset.
  *
  * @param {Array<Object>} data - The dataset.

@@ -7,11 +7,19 @@ let activeCharts = {};
 let minDate, maxDate;
 // Safely initialize the dictionary, checking if the function exists first.
 let vaccineDictionary = typeof getVaccineDictionary === 'function' ? getVaccineDictionary() : new Set();
+// Chart view state for interactive drill-down functionality
+let chartViewState = {
+    casesByYear: {
+        view: 'yearly',      // 'yearly' | 'monthly'
+        selectedYear: null   // null or number (e.g., 2023)
+    }
+};
 
 const chartRegistry = {
     demographics: [
         { func: generateSexDistribution, container: 'sexChartContainer' },
         { func: generateAgeDistribution, container: 'ageDistributionChartContainer' },
+        { func: generateCasesByYear, container: 'casesByYearChartContainer' },
     ],
     geographic: [
         { func: generatePatientProvincesDistribution, container: 'patientProvinceChartContainer' },
@@ -592,6 +600,42 @@ function generateSexDistribution(data) {
 
 function generateAgeDistribution(data) {
     renderAgeDistributionChart('ageDistributionChartContainer', data);
+}
+
+function generateCasesByYear(data) {
+    renderCasesByYearChart('casesByYearChartContainer', data, chartViewState.casesByYear);
+}
+
+// Drill down to monthly view for a specific year
+function drillDownToMonth(year) {
+    chartViewState.casesByYear.view = 'monthly';
+    chartViewState.casesByYear.selectedYear = year;
+
+    // Update year filter dropdown to show selected year
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) {
+        yearFilter.value = year.toString();
+        // Trigger year change to update date range
+        handleYearChange();
+        // Apply filters to update all charts with the selected year
+        applyFilters();
+    }
+}
+
+// Return to yearly view
+function returnToYearlyView() {
+    chartViewState.casesByYear.view = 'yearly';
+    chartViewState.casesByYear.selectedYear = null;
+
+    // Reset year filter to "All Years"
+    const yearFilter = document.getElementById('year-filter');
+    if (yearFilter) {
+        yearFilter.value = 'all';
+        // Trigger year change to reset date range
+        handleYearChange();
+        // Apply filters to update all charts
+        applyFilters();
+    }
 }
 
 function generatePatientProvincesDistribution(data) {
