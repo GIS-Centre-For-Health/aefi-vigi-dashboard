@@ -288,7 +288,6 @@ function generateSummaryStats(data) {
 
     const stats = [
         { title: 'Total Reports', value: totalRecords.toLocaleString() },
-        { title: 'Total Patients', value: totalPatients.toLocaleString() },
         { title: 'Total Serious Events', value: totalSeriousEvents.toLocaleString() },
         { title: 'Reporting Provinces', value: reportingProvinces.toLocaleString() },
     ];
