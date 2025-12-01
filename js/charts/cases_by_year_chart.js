@@ -34,7 +34,7 @@ function renderYearlyView(containerId, data) {
             label: 'Total Cases',
             data: counts,
             backgroundColor: '#2C4A7C',
-            maxBarThickness: 25
+            maxBarThickness: 80
         }]
     };
 
