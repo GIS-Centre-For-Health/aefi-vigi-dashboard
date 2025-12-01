@@ -33,7 +33,8 @@ function renderYearlyView(containerId, data) {
         datasets: [{
             label: 'Total Cases',
             data: counts,
-            backgroundColor: '#2C4A7C'
+            backgroundColor: '#2C4A7C',
+            maxBarThickness: 25
         }]
     };
 
@@ -49,8 +50,7 @@ function renderYearlyView(containerId, data) {
                 title: {
                     display: true,
                     text: 'Year'
-                },
-                maxBarThickness: 25
+                }
             },
             y: {
                 beginAtZero: true,
@@ -152,7 +152,8 @@ function renderMonthlyView(containerId, data, selectedYear) {
         datasets: [{
             label: 'Total Cases',
             data: counts,
-            backgroundColor: '#2C4A7C'
+            backgroundColor: '#2C4A7C',
+            maxBarThickness: 80
         }]
     };
 
@@ -168,8 +169,7 @@ function renderMonthlyView(containerId, data, selectedYear) {
                 title: {
                     display: true,
                     text: 'Month'
-                },
-                maxBarThickness: 80
+                }
             },
             y: {
                 beginAtZero: true,
