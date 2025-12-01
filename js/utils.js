@@ -80,7 +80,8 @@ function parseDate(dateStr) {
         const excelEpoch = new Date(Date.UTC(1899, 11, 30));
         date = new Date(excelEpoch.getTime() + dateStr * 86400000);
     } else {
-        const str = String(dateStr).trim();
+        // Remove all whitespace including carriage returns and extra spaces
+        const str = String(dateStr).replace(/[\r\n\t ]/g, '').trim();
         let year, month, day;
 
         // YYYY-MM-DD or YYYY/MM/DD
@@ -130,12 +131,24 @@ function parseDate(dateStr) {
  * @returns {Date|null} - The earliest onset date or null if no valid dates found.
  */
 function getEarliestOnsetDate(row) {
-    const onsetDates = String(row['Date of onset'] || '')
-        .split('\n')
-        .map(d => d.trim())  // Trim whitespace from each line
-        .filter(d => d !== '')  // Remove empty strings
-        .map(parseDate)
+    const rawDateStr = String(row['Date of onset'] || '');
+
+    // Split by newlines and carriage returns, and filter out empty strings
+    const dateLines = rawDateStr
+        .split(/[\r\n]+/)  // Split by newline or carriage return
+        .map(d => d.trim())  // Trim whitespace
+        .filter(d => d !== '');  // Remove empty strings
+
+    const onsetDates = dateLines
+        .map(dateStr => {
+            const parsed = parseDate(dateStr);
+            if (!parsed) {
+                console.warn('Failed to parse date:', dateStr);
+            }
+            return parsed;
+        })
         .filter(d => d instanceof Date && !isNaN(d));
+
     return onsetDates.length > 0 ? new Date(Math.min.apply(null, onsetDates)) : null;
 }
 
