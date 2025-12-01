@@ -18,7 +18,7 @@ function renderEventIdentificationChart(containerId, data, isSerious) {
 
     // Determine chart title and colors based on serious flag
     const chartTitle = isSerious
-        ? 'Serious AEFI - Identification to Notification'
+        ? 'Serious AEFI: Time interval - Identification to Notification'
         : 'Non-Serious AEFI - Identification to Notification';
 
     // Use same colors as Cases by Sex chart: #2C4A7C, #6B8CAE
