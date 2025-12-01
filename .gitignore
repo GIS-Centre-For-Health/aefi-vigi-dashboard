@@ -22,3 +22,4 @@ README.md
 
 # Any other files not needed for runtime
 *.md
+.claude
