@@ -50,7 +50,7 @@ function renderYearlyView(containerId, data) {
                     display: true,
                     text: 'Year'
                 },
-                maxBarThickness: 80
+                maxBarThickness: 25
             },
             y: {
                 beginAtZero: true,
