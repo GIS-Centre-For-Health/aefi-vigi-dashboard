@@ -130,12 +130,22 @@ function parseDate(dateStr) {
  * @returns {Date|null} - The earliest onset date or null if no valid dates found.
  */
 function getEarliestOnsetDate(row) {
-    const onsetDates = String(row['Date of onset'] || '')
+    const rawDateStr = String(row['Date of onset'] || '');
+    const dateLines = rawDateStr
         .split('\n')
-        .map(d => d.trim())  // Trim whitespace from each line
-        .filter(d => d !== '')  // Remove empty strings
-        .map(parseDate)
+        .map(d => d.trim())
+        .filter(d => d !== '');
+
+    const onsetDates = dateLines
+        .map(dateStr => {
+            const parsed = parseDate(dateStr);
+            if (!parsed) {
+                console.warn('Failed to parse date:', dateStr);
+            }
+            return parsed;
+        })
         .filter(d => d instanceof Date && !isNaN(d));
+
     return onsetDates.length > 0 ? new Date(Math.min.apply(null, onsetDates)) : null;
 }
 
