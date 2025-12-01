@@ -49,7 +49,8 @@ function renderYearlyView(containerId, data) {
                 title: {
                     display: true,
                     text: 'Year'
-                }
+                },
+                maxBarThickness: 80
             },
             y: {
                 beginAtZero: true,
@@ -167,7 +168,8 @@ function renderMonthlyView(containerId, data, selectedYear) {
                 title: {
                     display: true,
                     text: 'Month'
-                }
+                },
+                maxBarThickness: 80
             },
             y: {
                 beginAtZero: true,
