@@ -11,7 +11,7 @@ function renderSeriousEventChart(containerId, seriousCounts) {
 
     const containerHTML = `
         <div class="chart-header">
-            <h3 class="chart-title">Serious vs. Non-Serious Events</h3>
+            <h3 class="chart-title">Serious and Non Serious Events</h3>
             <div class="chart-container-tabs">
                 <button class="chart-container-tab active" data-view="chart">Chart</button>
                 <button class="chart-container-tab" data-view="table">Table</button>
