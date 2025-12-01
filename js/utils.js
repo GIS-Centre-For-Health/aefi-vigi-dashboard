@@ -132,6 +132,8 @@ function parseDate(dateStr) {
 function getEarliestOnsetDate(row) {
     const onsetDates = String(row['Date of onset'] || '')
         .split('\n')
+        .map(d => d.trim())  // Trim whitespace from each line
+        .filter(d => d !== '')  // Remove empty strings
         .map(parseDate)
         .filter(d => d instanceof Date && !isNaN(d));
     return onsetDates.length > 0 ? new Date(Math.min.apply(null, onsetDates)) : null;

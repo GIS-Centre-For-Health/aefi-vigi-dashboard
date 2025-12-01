@@ -84,9 +84,20 @@ function renderYearlyView(containerId, data) {
         // Add onClick handler for drill-down
         onClick: (event, elements) => {
             if (elements.length > 0) {
-                const index = elements[0].index;
-                const year = parseInt(chartData.labels[index]);
-                drillDownToMonth(year);
+                try {
+                    const index = elements[0].index;
+                    const yearLabel = chartData.labels[index];
+                    const year = parseInt(yearLabel, 10);
+
+                    if (isNaN(year)) {
+                        console.warn('Invalid year extracted from label:', yearLabel);
+                        return;
+                    }
+
+                    drillDownToMonth(year);
+                } catch (error) {
+                    console.error('Error in year chart click handler:', error);
+                }
             }
         },
         // Add hover cursor
