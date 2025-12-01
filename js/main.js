@@ -291,9 +291,6 @@ function resetUI() {
     document.getElementById('summary-stats').innerHTML = '';
 
     // Reset all filter dropdowns
-    const regionSelect = document.getElementById('region-filter');
-    clearSelectOptions(regionSelect, true);
-
     const yearSelect = document.getElementById('year-filter');
     clearSelectOptions(yearSelect, true);
 
@@ -343,18 +340,6 @@ function preprocessDates(data) {
 }
 
 function populateFilterOptions(data) {
-    const regionSelect = document.getElementById('region-filter');
-    clearSelectOptions(regionSelect, true);
-    const regions = getUniqueValues(data, 'Created by organisation level 3');
-    regions.forEach(region => {
-        if (region) {
-            const option = document.createElement('option');
-            option.value = region;
-            option.textContent = region;
-            regionSelect.appendChild(option);
-        }
-    });
-
     // Populate custom multi-select dropdown with vaccine options
     const vaccineDropdown = document.getElementById('vaccine-dropdown');
 
@@ -451,7 +436,6 @@ function toggleExportOptions(event) {
 function applyFilters() {
       showLoading('Applying filters...');
 
-      const regionFilter = document.getElementById('region-filter').value;
       const dateFromFilter = document.getElementById('date-from-filter').value;
       const dateToFilter = document.getElementById('date-to-filter').value;
 
@@ -464,9 +448,6 @@ function applyFilters() {
 
       let tempFilteredData = [...rawData];
 
-      if (regionFilter !== 'all') {
-          tempFilteredData = tempFilteredData.filter(row => row['Created by organisation level 3'] === regionFilter);
-      }
       if (selectedVaccines.length > 0 && !selectedVaccines.includes('all')) {
           tempFilteredData = tempFilteredData.filter(row => {
               const vaccineField = row['Vaccine'];
@@ -530,8 +511,6 @@ function applyFilters() {
 
 function resetFilters() {
     showLoading('Resetting filters...');
-
-    document.getElementById('region-filter').value = 'all';
 
     // Reset vaccine checkboxes
     const allCheckbox = document.getElementById('vaccine-all');
