@@ -5,7 +5,7 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
     const chartData = {
         labels: sortedDistricts.map(d => d[0]),
         datasets: [{
-            label: 'Cases by District',
+            label: 'Health Facilitie\'s District',
             data: sortedDistricts.map(d => d[1]),
             backgroundColor: '#2C4A7C',
         }]
@@ -49,7 +49,7 @@ function createDistrictDistributionChart(data, chartInstances, chartId) {
 
     return createBarChart(
         'districtDistributionChartContainer',
-        'Cases by Districts',
+        'Health Facilitie\'s Districts',
         chartData,
         chartOptions,
         sortedDistricts,
