@@ -389,6 +389,298 @@ function showToast(message, type = 'info', duration = 5000) {
 }
 
 ///////////////////////////////////////////////////////////
+// PDF Export Helper Functions
+///////////////////////////////////////////////////////////
+
+/**
+ * Captures a Chart.js chart instance as a high-quality base64 PNG image
+ * @param {string} containerId - The chart container ID
+ * @returns {Promise<string|null>} Base64 image data or null if capture fails
+ */
+async function captureChartCanvas(containerId) {
+    try {
+        const chart = activeCharts[containerId];
+        if (!chart) {
+            console.warn(`Chart not found: ${containerId}`);
+            return null;
+        }
+
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Container not found: ${containerId}`);
+            return null;
+        }
+
+        // Ensure chart view is active
+        const chartContent = container.querySelector('.chart-content');
+        const tableContent = container.querySelector('.table-content');
+        if (chartContent && tableContent && !chartContent.classList.contains('active')) {
+            chartContent.classList.add('active');
+            tableContent.classList.remove('active');
+            // Allow DOM to update
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        // Export chart at high quality
+        return chart.toBase64Image('image/png');
+    } catch (error) {
+        console.error(`Failed to capture chart ${containerId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Captures the table view of a chart as a high-quality image using html2canvas
+ * @param {string} containerId - The chart container ID
+ * @returns {Promise<string|null>} Base64 image data or null if capture fails
+ */
+async function captureTableView(containerId) {
+    try {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Container not found: ${containerId}`);
+            return null;
+        }
+
+        // Switch to table view
+        const chartContent = container.querySelector('.chart-content');
+        const tableContent = container.querySelector('.table-content');
+        if (!tableContent) {
+            console.warn(`Table not found in ${containerId}`);
+            return null;
+        }
+
+        chartContent.classList.remove('active');
+        tableContent.classList.add('active');
+
+        // Allow DOM to render
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Capture table with html2canvas at scale=2 for high quality
+        const canvas = await html2canvas(tableContent, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Switch back to chart view
+        chartContent.classList.add('active');
+        tableContent.classList.remove('active');
+
+        return imgData;
+    } catch (error) {
+        console.error(`Failed to capture table ${containerId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Generates the cover page of the PDF report
+ * @param {jsPDF} pdf - The PDF document instance
+ * @param {Object} metadata - Report metadata
+ */
+function generatePDFCoverPage(pdf, metadata) {
+    const pageWidth = pdf.internal.pageSize.width;
+    const pageHeight = pdf.internal.pageSize.height;
+
+    // Background color (light blue)
+    pdf.setFillColor(240, 245, 250);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    // Title
+    pdf.setFontSize(28);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(44, 62, 80);
+    pdf.text('AEFI Data Visualization Report', pageWidth / 2, 60, { align: 'center' });
+
+    // Divider line
+    pdf.setDrawColor(100, 150, 200);
+    pdf.setLineWidth(0.5);
+    pdf.line(20, 75, pageWidth - 20, 75);
+
+    // Metadata section
+    let y = 100;
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(60, 60, 60);
+
+    // Generated date
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Generated:', 30, y);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(metadata.generatedDate, 80, y);
+
+    y += 12;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Date Range:', 30, y);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`${metadata.dateFrom} to ${metadata.dateTo}`, 80, y);
+
+    y += 12;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Total Records:', 30, y);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(String(metadata.totalRecords), 80, y);
+
+    // Applied Filters section
+    y += 25;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(44, 62, 80);
+    pdf.setFontSize(12);
+    pdf.text('Applied Filters:', 30, y);
+
+    y += 12;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor(60, 60, 60);
+    pdf.text(`Year: ${metadata.filters.year}`, 40, y);
+
+    y += 8;
+    pdf.text(`Vaccines: ${metadata.filters.vaccines}`, 40, y);
+
+    y += 8;
+    pdf.text(`Seriousness: ${metadata.filters.seriousness}`, 40, y);
+}
+
+/**
+ * Adds summary statistics page to PDF
+ * @param {jsPDF} pdf - The PDF document instance
+ */
+async function addPDFSummaryStats(pdf) {
+    try {
+        const summaryElement = document.getElementById('summary-stats');
+        if (!summaryElement) {
+            console.warn('Summary stats element not found');
+            return;
+        }
+
+        pdf.addPage();
+
+        // Title
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(44, 62, 80);
+        pdf.text('Data Overview', 15, 15);
+
+        // Capture summary stats
+        const canvas = await html2canvas(summaryElement, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 180;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Center the image
+        const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, 30, imgWidth, imgHeight);
+    } catch (error) {
+        console.error('Failed to capture summary stats:', error);
+        // Continue gracefully without summary stats
+    }
+}
+
+/**
+ * Adds a category section header page to the PDF
+ * @param {jsPDF} pdf - The PDF document instance
+ * @param {string} categoryName - The category name to display
+ */
+function addCategorySectionHeader(pdf, categoryName) {
+    pdf.addPage();
+
+    const pageWidth = pdf.internal.pageSize.width;
+    const pageHeight = pdf.internal.pageSize.height;
+
+    // Background color
+    pdf.setFillColor(245, 248, 250);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    // Title
+    pdf.setFontSize(24);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(44, 62, 80);
+    pdf.text(categoryName, pageWidth / 2, pageHeight / 2 - 20, { align: 'center' });
+
+    // Decorative line
+    pdf.setDrawColor(100, 150, 200);
+    pdf.setLineWidth(1);
+    pdf.line(40, pageHeight / 2 + 10, pageWidth - 40, pageHeight / 2 + 10);
+}
+
+/**
+ * Adds a chart and its corresponding table data to the PDF on separate pages
+ * @param {jsPDF} pdf - The PDF document instance
+ * @param {string} containerId - The chart container ID
+ * @param {string} chartTitle - The title to display for the chart
+ */
+async function addChartAndTablePages(pdf, containerId, chartTitle) {
+    try {
+        // Capture chart
+        const chartImg = await captureChartCanvas(containerId);
+
+        if (chartImg) {
+            // Add chart page
+            pdf.addPage();
+
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(44, 62, 80);
+            pdf.text(chartTitle, 15, 15);
+
+            const imgWidth = 180;
+            const imgHeight = 120;
+            const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
+
+            pdf.addImage(chartImg, 'PNG', xOffset, 30, imgWidth, imgHeight);
+        } else {
+            console.warn(`Skipping chart page for ${containerId} - capture failed`);
+        }
+
+        // Capture table
+        const tableImgData = await captureTableView(containerId);
+
+        if (tableImgData) {
+            // Add table page
+            pdf.addPage();
+
+            pdf.setFontSize(14);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(44, 62, 80);
+            pdf.text(`${chartTitle} - Data Table`, 15, 15);
+
+            const imgWidth = 180;
+            // For data URL images, we'll use a fixed height for tables
+            const imgHeight = 140;
+            const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
+
+            pdf.addImage(tableImgData, 'PNG', xOffset, 30, imgWidth, imgHeight);
+        } else {
+            console.warn(`Skipping table page for ${containerId} - capture failed`);
+        }
+
+        // Ensure chart view is restored
+        const container = document.getElementById(containerId);
+        const chartContent = container?.querySelector('.chart-content');
+        const tableContent = container?.querySelector('.table-content');
+        if (chartContent && tableContent) {
+            chartContent.classList.add('active');
+            tableContent.classList.remove('active');
+        }
+    } catch (error) {
+        console.error(`Failed to add chart and table pages for ${containerId}:`, error);
+        // Continue gracefully
+    }
+}
+
+///////////////////////////////////////////////////////////
 // Export Functions
 ///////////////////////////////////////////////////////////
 function exportToCSV() {
@@ -416,13 +708,149 @@ function exportToCSV() {
     showSuccess('CSV exported successfully');
 }
 
-function exportToPDF() {
-    if (typeof jsPDF === 'undefined') {
+/**
+ * Exports entire dashboard as a comprehensive multi-page PDF report
+ * Includes cover page, summary stats, and all charts with data tables
+ */
+async function exportToPDF() {
+    // Validate libraries
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
         showError('PDF export library not loaded');
         return;
     }
-    
-    showSuccess('PDF export feature coming soon');
+
+    if (typeof html2canvas === 'undefined') {
+        showError('Image export library not loaded');
+        return;
+    }
+
+    // Validate data
+    if (!filteredData || filteredData.length === 0) {
+        showError('No data to export');
+        return;
+    }
+
+    try {
+        showLoading('Generating PDF report... (5%)');
+
+        // Initialize jsPDF
+        const jsPDFLib = window.jspdf.jsPDF;
+        const pdf = new jsPDFLib({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // 1. Generate Cover Page
+        showLoading('Generating PDF report... (5%)');
+        const metadata = {
+            generatedDate: new Date().toLocaleString(),
+            dateFrom: document.getElementById('date-from-filter')?.value || 'All',
+            dateTo: document.getElementById('date-to-filter')?.value || 'All',
+            totalRecords: filteredData.length,
+            filters: {
+                year: document.getElementById('year-filter')?.value || 'All',
+                vaccines: document.getElementById('vaccine-filter-display')?.textContent || 'All',
+                seriousness: document.getElementById('seriousness-filter')?.value || 'All'
+            }
+        };
+        generatePDFCoverPage(pdf, metadata);
+
+        // 2. Add Summary Stats Page
+        showLoading('Generating PDF report... (10%)');
+        await addPDFSummaryStats(pdf);
+
+        // 3. Define Chart Sections with Metadata
+        const sections = [
+            {
+                category: 'Demographics',
+                charts: [
+                    { id: 'sexChartContainer', title: 'Sex Distribution' },
+                    { id: 'ageDistributionChartContainer', title: 'Age Distribution' },
+                    { id: 'casesByYearChartContainer', title: 'Cases by Year' }
+                ],
+                progressStart: 15,
+                progressEnd: 35
+            },
+            {
+                category: 'Geographic Distribution',
+                charts: [
+                    { id: 'patientProvinceChartContainer', title: 'Patient Province Distribution' },
+                    { id: 'healthFacilityProvinceChartContainer', title: 'Health Facility Province Distribution' },
+                    { id: 'districtDistributionChartContainer', title: 'District Distribution' },
+                    { id: 'reporterProvinceChartContainer', title: 'Reporter Province Distribution' }
+                ],
+                progressStart: 35,
+                progressEnd: 55
+            },
+            {
+                category: 'Clinical Analysis',
+                charts: [
+                    { id: 'adverseEventsChart', title: 'Adverse Events Distribution' },
+                    { id: 'seriousnessChart', title: 'Seriousness Distribution' },
+                    { id: 'seriousReasonChart', title: 'Serious Event Reasons' }
+                ],
+                progressStart: 55,
+                progressEnd: 70
+            },
+            {
+                category: 'Performance Indicators',
+                charts: [
+                    { id: 'seriousIdentificationChartContainer', title: 'Serious AEFIs - Identification to Notification' },
+                    { id: 'seriousReportingChartContainer', title: 'Serious AEFIs - Notification to Reporting' },
+                    { id: 'nonSeriousIdentificationChartContainer', title: 'Non-Serious AEFIs - Identification to Notification' },
+                    { id: 'nonSeriousReportingChartContainer', title: 'Non-Serious AEFIs - Notification to Reporting' }
+                ],
+                progressStart: 70,
+                progressEnd: 85
+            },
+            {
+                category: 'Vaccine Analysis',
+                charts: [
+                    { id: 'vaccineDistributionChartContainer', title: 'Vaccine Distribution' },
+                    { id: 'vaccineAdverseEventsChartContainer', title: 'Vaccine-Specific Adverse Events' }
+                ],
+                progressStart: 85,
+                progressEnd: 95
+            }
+        ];
+
+        // 4. Capture All Chart Sections
+        for (const section of sections) {
+            // Add category header page
+            addCategorySectionHeader(pdf, section.category);
+            showLoading(`Generating PDF report... (${section.progressStart}%)`);
+
+            const chartCount = section.charts.length;
+            for (let i = 0; i < chartCount; i++) {
+                const chart = section.charts[i];
+
+                // Add chart + table pages
+                await addChartAndTablePages(pdf, chart.id, chart.title);
+
+                // Update progress proportionally within section range
+                const chartProgress = section.progressStart +
+                    ((i + 1) / chartCount) * (section.progressEnd - section.progressStart);
+                const progressPercent = Math.round(chartProgress);
+                showLoading(`Generating PDF report... (${progressPercent}%)`);
+
+                // Throttle to prevent UI freeze
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+
+        // 5. Save PDF
+        showLoading('Saving PDF file... (98%)');
+        const filename = `AEFI_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(filename);
+
+        hideLoading();
+        showSuccess(`PDF report exported successfully: ${filename}`);
+    } catch (error) {
+        console.error('PDF export failed:', error);
+        hideLoading();
+        showError(`PDF export failed: ${error.message}`);
+    }
 }
 
 function exportAllChartsToPNG() {
