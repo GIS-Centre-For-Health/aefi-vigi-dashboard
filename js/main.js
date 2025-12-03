@@ -395,16 +395,24 @@ function populateFilterOptions(data) {
     const yearSet = new Set();
 
     data.forEach(row => {
+        // Extract years from BOTH 'Date of report' AND 'Date of onset'
+        // since charts may use either field
         const reportDate = parseDate(row['Date of report']);
         if (reportDate) {
             yearSet.add(reportDate.getFullYear());
+        }
+
+        // Also get years from 'Date of onset' to match the chart years
+        const onsetDate = getEarliestOnsetDate(row);
+        if (onsetDate) {
+            yearSet.add(onsetDate.getFullYear());
         }
     });
 
     const sortedYears = Array.from(yearSet).sort((a, b) => b - a); // Sort descending (most recent first)
     sortedYears.forEach(year => {
         const option = document.createElement('option');
-        option.value = year;
+        option.value = String(year);  // Explicitly convert to string for consistency
         option.textContent = year;
         yearSelect.appendChild(option);
     });
