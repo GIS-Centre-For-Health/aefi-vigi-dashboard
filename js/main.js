@@ -137,10 +137,10 @@ function handleYearChange() {
             document.getElementById('date-to-filter').value = maxDate.toISOString().split('T')[0];
         }
     } else {
-        // Set date range to the full selected year
+        // Set date range to the full selected year (using UTC to avoid timezone issues)
         const selectedYear = parseInt(yearFilter.value);
-        const yearStart = new Date(selectedYear, 0, 1);
-        const yearEnd = new Date(selectedYear, 11, 31);
+        const yearStart = new Date(Date.UTC(selectedYear, 0, 1));
+        const yearEnd = new Date(Date.UTC(selectedYear, 11, 31));
 
         document.getElementById('date-from-filter').value = yearStart.toISOString().split('T')[0];
         document.getElementById('date-to-filter').value = yearEnd.toISOString().split('T')[0];
