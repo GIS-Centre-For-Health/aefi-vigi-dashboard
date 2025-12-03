@@ -75,44 +75,52 @@ function parseDate(dateStr) {
 
     let date = null;
 
-    // Handle Excel serial numbers
-    if (typeof dateStr === 'number' && dateStr > 0) {
+    // Convert to string first to handle both numbers and strings uniformly
+    let str = String(dateStr);
+
+    // SPLIT on newlines first (don't remove them) - take the first date only
+    str = str.split(/[\r\n]+/)[0].trim();
+
+    // Remove only tabs and spaces (NOT newlines since we already split)
+    str = str.replace(/[\t ]/g, '');
+
+    let year, month, day;
+
+    // YYYYMMDD - check BEFORE Excel serial number to prevent misinterpretation
+    // (e.g., 20240216 should be parsed as a date, not as day 20,240,216)
+    if (/^(\d{8})$/.test(str)) {
+        year = parseInt(str.substring(0, 4), 10);
+        month = parseInt(str.substring(4, 6), 10) - 1;
+        day = parseInt(str.substring(6, 8), 10);
+        date = new Date(Date.UTC(year, month, day));
+    }
+    // YYYY-MM-DD or YYYY/MM/DD
+    else if (/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/.test(str)) {
+        const parts = str.split(/[-\/]/);
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+        date = new Date(Date.UTC(year, month, day));
+    }
+    // DD-MM-YYYY or DD/MM/YYYY
+    else if (/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.test(str)) {
+        const parts = str.split(/[-\/]/);
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10) - 1;
+        year = parseInt(parts[2], 10);
+        date = new Date(Date.UTC(year, month, day));
+    }
+    // Excel serial numbers (only for numbers in valid Excel date range)
+    else if (typeof dateStr === 'number' && dateStr > 0 && dateStr < 2958466) {
+        // 2958466 = Dec 31, 9999 in Excel serial date
         const excelEpoch = new Date(Date.UTC(1899, 11, 30));
         date = new Date(excelEpoch.getTime() + dateStr * 86400000);
-    } else {
-        // Remove all whitespace including carriage returns and extra spaces
-        const str = String(dateStr).replace(/[\r\n\t ]/g, '').trim();
-        let year, month, day;
-
-        // YYYY-MM-DD or YYYY/MM/DD
-        if (/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/.test(str)) {
-            const parts = str.split(/[-\/]/);
-            year = parseInt(parts[0], 10);
-            month = parseInt(parts[1], 10) - 1;
-            day = parseInt(parts[2], 10);
-            date = new Date(Date.UTC(year, month, day));
-        }
-        // DD-MM-YYYY or DD/MM/YYYY
-        else if (/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/.test(str)) {
-            const parts = str.split(/[-\/]/);
-            day = parseInt(parts[0], 10);
-            month = parseInt(parts[1], 10) - 1;
-            year = parseInt(parts[2], 10);
-            date = new Date(Date.UTC(year, month, day));
-        }
-        // YYYYMMDD
-        else if (/^(\d{8})$/.test(str)) {
-            year = parseInt(str.substring(0, 4), 10);
-            month = parseInt(str.substring(4, 6), 10) - 1;
-            day = parseInt(str.substring(6, 8), 10);
-            date = new Date(Date.UTC(year, month, day));
-        }
-        // Fallback for other ISO-like formats that JS can handle
-        else {
-            const tempDate = new Date(str);
-            if (tempDate instanceof Date && !isNaN(tempDate)) {
-                date = new Date(Date.UTC(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate()));
-            }
+    }
+    // Fallback for other ISO-like formats that JS can handle
+    else {
+        const tempDate = new Date(str);
+        if (tempDate instanceof Date && !isNaN(tempDate)) {
+            date = new Date(Date.UTC(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate()));
         }
     }
 
