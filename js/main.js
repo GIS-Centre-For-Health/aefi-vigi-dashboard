@@ -139,11 +139,23 @@ function handleYearChange() {
     } else {
         // Set date range to the full selected year (using UTC to avoid timezone issues)
         const selectedYear = parseInt(yearFilter.value);
+
+        // Validate the year is a reasonable number
+        if (isNaN(selectedYear) || selectedYear < 1900 || selectedYear > 2100) {
+            console.error('Invalid year selected:', selectedYear);
+            return;
+        }
+
         const yearStart = new Date(Date.UTC(selectedYear, 0, 1));
         const yearEnd = new Date(Date.UTC(selectedYear, 11, 31));
 
-        document.getElementById('date-from-filter').value = yearStart.toISOString().split('T')[0];
-        document.getElementById('date-to-filter').value = yearEnd.toISOString().split('T')[0];
+        // Verify dates are valid before converting to string
+        if (!isNaN(yearStart.getTime()) && !isNaN(yearEnd.getTime())) {
+            document.getElementById('date-from-filter').value = yearStart.toISOString().split('T')[0];
+            document.getElementById('date-to-filter').value = yearEnd.toISOString().split('T')[0];
+        } else {
+            console.error('Failed to create valid dates for year:', selectedYear);
+        }
     }
 }
 
@@ -383,16 +395,24 @@ function populateFilterOptions(data) {
     const yearSet = new Set();
 
     data.forEach(row => {
+        // Extract years from BOTH 'Date of report' AND 'Date of onset'
+        // since charts may use either field
         const reportDate = parseDate(row['Date of report']);
         if (reportDate) {
             yearSet.add(reportDate.getFullYear());
+        }
+
+        // Also get years from 'Date of onset' to match the chart years
+        const onsetDate = getEarliestOnsetDate(row);
+        if (onsetDate) {
+            yearSet.add(onsetDate.getFullYear());
         }
     });
 
     const sortedYears = Array.from(yearSet).sort((a, b) => b - a); // Sort descending (most recent first)
     sortedYears.forEach(year => {
         const option = document.createElement('option');
-        option.value = year;
+        option.value = String(year);  // Explicitly convert to string for consistency
         option.textContent = year;
         yearSelect.appendChild(option);
     });
