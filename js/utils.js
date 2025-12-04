@@ -401,7 +401,7 @@ async function captureChartCanvas(containerId) {
     try {
         const chart = activeCharts[containerId];
         if (!chart) {
-            console.warn(`Chart not found: ${containerId}`);
+            console.warn(`Chart not found in activeCharts: ${containerId}`);
             return null;
         }
 
@@ -414,15 +414,35 @@ async function captureChartCanvas(containerId) {
         // Ensure chart view is active
         const chartContent = container.querySelector('.chart-content');
         const tableContent = container.querySelector('.table-content');
-        if (chartContent && tableContent && !chartContent.classList.contains('active')) {
-            chartContent.classList.add('active');
-            tableContent.classList.remove('active');
-            // Allow DOM to update
-            await new Promise(resolve => setTimeout(resolve, 50));
+        if (chartContent && tableContent) {
+            if (!chartContent.classList.contains('active')) {
+                chartContent.classList.add('active');
+                tableContent.classList.remove('active');
+                // Allow DOM to update
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
 
-        // Export chart at high quality
-        return chart.toBase64Image('image/png');
+        // Get the canvas from the chart instance
+        const canvas = chart.canvas;
+        if (!canvas) {
+            console.warn(`Canvas not found in chart ${containerId}`);
+            return null;
+        }
+
+        // Get base64 image data
+        const imgData = chart.toBase64Image('image/png');
+        if (!imgData) {
+            console.warn(`Failed to convert chart to base64: ${containerId}`);
+            return null;
+        }
+
+        return {
+            imgData: imgData,
+            width: canvas.width,
+            height: canvas.height,
+            devicePixelRatio: window.devicePixelRatio || 1
+        };
     } catch (error) {
         console.error(`Failed to capture chart ${containerId}:`, error);
         return null;
@@ -432,7 +452,7 @@ async function captureChartCanvas(containerId) {
 /**
  * Captures the table view of a chart as a high-quality image using html2canvas
  * @param {string} containerId - The chart container ID
- * @returns {Promise<string|null>} Base64 image data or null if capture fails
+ * @returns {Promise<object|null>} Object with imgData, width, height and scale, or null if capture fails
  */
 async function captureTableView(containerId) {
     try {
@@ -462,7 +482,9 @@ async function captureTableView(containerId) {
             backgroundColor: '#ffffff',
             logging: false,
             useCORS: true,
-            allowTaint: true
+            allowTaint: true,
+            windowWidth: tableContent.scrollWidth,
+            windowHeight: tableContent.scrollHeight
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -471,7 +493,13 @@ async function captureTableView(containerId) {
         chartContent.classList.add('active');
         tableContent.classList.remove('active');
 
-        return imgData;
+        // Return image data with dimensions for proper scaling
+        return {
+            imgData: imgData,
+            width: canvas.width,
+            height: canvas.height,
+            scale: 2
+        };
     } catch (error) {
         console.error(`Failed to capture table ${containerId}:`, error);
         return null;
@@ -576,12 +604,19 @@ async function addPDFSummaryStats(pdf) {
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 180;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Use calculatePDFDimensions for proper aspect ratio scaling
+        const summaryDims = calculatePDFDimensions(
+            canvas.width,
+            canvas.height,
+            180,  // max width
+            200,  // max height for summary
+            2     // html2canvas scale
+        );
 
         // Center the image
-        const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
-        pdf.addImage(imgData, 'PNG', xOffset, 30, imgWidth, imgHeight);
+        const xOffset = (pdf.internal.pageSize.width - summaryDims.width) / 2;
+        pdf.addImage(imgData, 'PNG', xOffset, 30, summaryDims.width, summaryDims.height);
     } catch (error) {
         console.error('Failed to capture summary stats:', error);
         // Continue gracefully without summary stats
@@ -616,6 +651,82 @@ function addCategorySectionHeader(pdf, categoryName) {
 }
 
 /**
+ * Calculate PDF dimensions from canvas dimensions with proper aspect ratio preservation
+ * Converts pixel dimensions to millimeters and scales to fit within maximum bounds
+ * Handles both Chart.js canvases and html2canvas outputs
+ * @param {number} canvasWidth - Canvas width in pixels (logical pixels for Chart.js, physical for html2canvas)
+ * @param {number} canvasHeight - Canvas height in pixels
+ * @param {number} maxWidth - Maximum width in mm (default 180)
+ * @param {number} maxHeight - Maximum height in mm (default 240)
+ * @param {number} scale - html2canvas scale factor (1 for Chart.js, 2 for html2canvas at 2x)
+ * @returns {object} { width: mm, height: mm }
+ */
+function calculatePDFDimensions(canvasWidth, canvasHeight, maxWidth = 180, maxHeight = 240, scale = 1) {
+    if (!canvasWidth || !canvasHeight || canvasWidth <= 0 || canvasHeight <= 0) {
+        // Return default fallback dimensions
+        return { width: maxWidth, height: maxHeight * 0.6 };
+    }
+
+    // For html2canvas (scale=2), canvas dimensions are doubled for high resolution
+    // For Chart.js (scale=1), canvas dimensions are logical pixels
+    const actualWidth = canvasWidth / scale;
+    const actualHeight = canvasHeight / scale;
+
+    // Convert logical pixels to mm
+    // Standard: 96 DPI = 1 inch = 25.4mm, so 1px = 25.4/96 mm
+    const MM_PER_PIXEL = 25.4 / 96;
+    let widthMM = actualWidth * MM_PER_PIXEL;
+    let heightMM = actualHeight * MM_PER_PIXEL;
+
+    // Handle unreasonable dimensions (protect against extreme values)
+    if (widthMM > 500 || heightMM > 500) {
+        // Likely a vertical chart with many items - cap at reasonable max
+        widthMM = Math.min(widthMM, maxWidth);
+        heightMM = Math.min(heightMM, maxHeight);
+    } else {
+        // Scale down to fit max width while preserving aspect ratio
+        if (widthMM > maxWidth) {
+            const ratio = maxWidth / widthMM;
+            widthMM = maxWidth;
+            heightMM = heightMM * ratio;
+        }
+
+        // If still too tall, scale down to max height
+        if (heightMM > maxHeight) {
+            const ratio = maxHeight / heightMM;
+            heightMM = maxHeight;
+            widthMM = widthMM * ratio;
+        }
+    }
+
+    // Ensure minimum dimensions for visibility
+    if (widthMM < 50) widthMM = 50;
+    if (heightMM < 30) heightMM = 30;
+
+    return { width: widthMM, height: heightMM };
+}
+
+/**
+ * Check if content fits on current page, add new page if needed
+ * @param {object} pdf - jsPDF instance
+ * @param {number} currentY - Current Y position in mm
+ * @param {number} contentHeight - Height of content to add in mm
+ * @param {number} margin - Bottom margin in mm (default 20)
+ * @returns {number} New Y position after page break (if needed)
+ */
+function checkAndAddPageBreak(pdf, currentY, contentHeight, margin = 20) {
+    const pageHeight = pdf.internal.pageSize.height;
+
+    // If content doesn't fit on current page
+    if (currentY + contentHeight > pageHeight - margin) {
+        pdf.addPage();
+        return 15;  // Return to top margin
+    }
+
+    return currentY;
+}
+
+/**
  * Adds a chart and its corresponding table data to the PDF on separate pages
  * @param {jsPDF} pdf - The PDF document instance
  * @param {string} containerId - The chart container ID
@@ -623,45 +734,79 @@ function addCategorySectionHeader(pdf, categoryName) {
  */
 async function addChartAndTablePages(pdf, containerId, chartTitle) {
     try {
-        // Capture chart
-        const chartImg = await captureChartCanvas(containerId);
+        // Capture chart with dimensions
+        const chartCapture = await captureChartCanvas(containerId);
 
-        if (chartImg) {
-            // Add chart page
+        if (chartCapture && chartCapture.imgData) {
+            // Calculate proper dimensions maintaining aspect ratio
+            // Chart.js canvases are at device pixel ratio, so account for that
+            const chartDims = calculatePDFDimensions(
+                chartCapture.width,
+                chartCapture.height,
+                180,  // max width
+                180,  // max height for charts
+                chartCapture.devicePixelRatio || 1  // Pass device pixel ratio for Chart.js
+            );
+
+            // Add new page for chart
             pdf.addPage();
 
+            // Add title
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(44, 62, 80);
             pdf.text(chartTitle, 15, 15);
 
-            const imgWidth = 180;
-            const imgHeight = 120;
-            const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
+            // Center the chart horizontally
+            const xOffset = (pdf.internal.pageSize.width - chartDims.width) / 2;
 
-            pdf.addImage(chartImg, 'PNG', xOffset, 30, imgWidth, imgHeight);
+            // Add chart image with calculated dimensions
+            pdf.addImage(
+                chartCapture.imgData,
+                'PNG',
+                xOffset,
+                25,  // Start below title
+                chartDims.width,
+                chartDims.height
+            );
         } else {
             console.warn(`Skipping chart page for ${containerId} - capture failed`);
         }
 
-        // Capture table
-        const tableImgData = await captureTableView(containerId);
+        // Capture table with dimensions
+        const tableCapture = await captureTableView(containerId);
 
-        if (tableImgData) {
-            // Add table page
+        if (tableCapture && tableCapture.imgData) {
+            // Calculate proper dimensions for table
+            const tableDims = calculatePDFDimensions(
+                tableCapture.width,
+                tableCapture.height,
+                180,  // max width
+                240,  // max height for tables (allow more vertical space)
+                tableCapture.scale || 1
+            );
+
+            // Add new page for table
             pdf.addPage();
 
+            // Add title
             pdf.setFontSize(14);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(44, 62, 80);
             pdf.text(`${chartTitle} - Data Table`, 15, 15);
 
-            const imgWidth = 180;
-            // For data URL images, we'll use a fixed height for tables
-            const imgHeight = 140;
-            const xOffset = (pdf.internal.pageSize.width - imgWidth) / 2;
+            // Center the table horizontally
+            const xOffset = (pdf.internal.pageSize.width - tableDims.width) / 2;
 
-            pdf.addImage(tableImgData, 'PNG', xOffset, 30, imgWidth, imgHeight);
+            // Add table image with calculated dimensions
+            pdf.addImage(
+                tableCapture.imgData,
+                'PNG',
+                xOffset,
+                25,  // Start below title
+                tableDims.width,
+                tableDims.height
+            );
         } else {
             console.warn(`Skipping table page for ${containerId} - capture failed`);
         }
@@ -676,37 +821,12 @@ async function addChartAndTablePages(pdf, containerId, chartTitle) {
         }
     } catch (error) {
         console.error(`Failed to add chart and table pages for ${containerId}:`, error);
-        // Continue gracefully
     }
 }
 
 ///////////////////////////////////////////////////////////
 // Export Functions
 ///////////////////////////////////////////////////////////
-function exportToCSV() {
-    const headers = Object.keys(filteredData[0] || {});
-    let csvContent = headers.join(',') + '\r\n';
-    filteredData.forEach(row => {
-        const values = headers.map(header => {
-            const value = row[header] instanceof Date ? row[header].toISOString().split('T')[0] : row[header];
-            const valueStr = String(value || '');
-            return valueStr.includes(',') ? `"${valueStr.replace(/"/g, '""')}"` : valueStr;
-        });
-        csvContent += values.join(',') + '\r\n';
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'aefi_data.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    showSuccess('CSV exported successfully');
-}
 
 /**
  * Exports entire dashboard as a comprehensive multi-page PDF report
@@ -852,16 +972,6 @@ async function exportToPDF() {
         showError(`PDF export failed: ${error.message}`);
     }
 }
-
-function exportAllChartsToPNG() {
-    if (typeof html2canvas === 'undefined') {
-        showError('Image export library not loaded');
-        return;
-    }
-    
-    showSuccess('PNG export feature coming soon');
-}
-
 
 function createChart(containerId, title, type, data, options = {}, containerHTML = null) {
     const container = document.getElementById(containerId);

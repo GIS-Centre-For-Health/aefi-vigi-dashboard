@@ -562,15 +562,9 @@ function resetFilters() {
 
 
 function exportData(type) {
-    showLoading(`Preparing ${type.toUpperCase()} export...`);
-    setTimeout(() => {
-        switch (type) {
-            case 'pdf': exportToPDF(); break;
-            case 'csv': exportToCSV(); break;
-            case 'png': exportAllChartsToPNG(); break;
-        }
-        hideLoading();
-    }, 100);
+    if (type === 'pdf') {
+        exportToPDF();
+    }
 }
 
 ///////////////////////////////////////////////////////////
