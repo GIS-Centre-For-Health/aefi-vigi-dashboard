@@ -829,10 +829,26 @@ async function addChartAndTablePages(pdf, containerId, chartTitle) {
 ///////////////////////////////////////////////////////////
 
 /**
+ * @deprecated This function is deprecated. Use PDFExport.exportFullReport() instead.
+ *
+ * The new PDF export system in js/pdf/ provides:
+ * - PDFExport.exportSingleChart(containerId) - Export a single chart
+ * - PDFExport.exportCategory(categoryName) - Export all charts in a category
+ * - PDFExport.exportFullReport() - Export complete report
+ *
+ * The new system offers 16:9 landscape pages with chart+table side-by-side,
+ * per-chart configuration, and off-screen rendering that doesn't affect display.
+ *
  * Exports entire dashboard as a comprehensive multi-page PDF report
  * Includes cover page, summary stats, and all charts with data tables
  */
 async function exportToPDF() {
+    console.warn('exportToPDF() is deprecated. Use PDFExport.exportFullReport() instead.');
+
+    // Redirect to new system if available
+    if (typeof PDFExport !== 'undefined') {
+        return PDFExport.exportFullReport();
+    }
     // Validate libraries
     if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
         showError('PDF export library not loaded');
