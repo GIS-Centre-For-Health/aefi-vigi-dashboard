@@ -563,7 +563,13 @@ function resetFilters() {
 
 function exportData(type) {
     if (type === 'pdf') {
-        exportToPDF();
+        // Use the new modular PDF export system
+        if (typeof PDFExport !== 'undefined') {
+            PDFExport.exportFullReport();
+        } else {
+            // Fallback to old function if new system not loaded
+            exportToPDF();
+        }
     }
 }
 
