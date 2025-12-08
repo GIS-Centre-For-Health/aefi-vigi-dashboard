@@ -298,8 +298,8 @@ function generateSummaryStats(data) {
     const totalPatients = patientIds.length;
     const totalSeriousEvents = patientIds.reduce((acc, id) => acc + patients[id].seriousEventCount, 0);
 
-    const reportingProvinces = getUniqueValues(data, 'Patient state or province').length;
-    
+    // const reportingProvinces = getUniqueValues(data, 'Patient state or province').length; // Commented for future use
+
     // const ages = data.map(r => r.NormalizedAge).filter(age => age !== null && age !== undefined);
     // let averageAgeFormatted = 'N/A';
     // if (ages.length > 0) {
@@ -312,7 +312,7 @@ function generateSummaryStats(data) {
     const stats = [
         { title: 'Total Reports', value: totalRecords.toLocaleString() },
         { title: 'Total Serious Events', value: totalSeriousEvents.toLocaleString() },
-        { title: 'Reporting Provinces', value: reportingProvinces.toLocaleString() },
+        // { title: 'Reporting Provinces', value: reportingProvinces.toLocaleString() }, // Commented for future use
     ];
 
     stats.forEach(stat => {
